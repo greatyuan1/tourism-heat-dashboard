@@ -1,8 +1,0 @@
-fastapi
-uvicorn[standard]
-python-dotenv
-requests
-pandas
-apscheduler
-beautifulsoup4
-lxml
