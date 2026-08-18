@@ -1,7 +1,7 @@
 """AI 大模型服务
 
 封装 DeepSeek 大模型 API 调用（OpenAI 兼容格式），提供三个核心功能：
-- generate_daily_overview：每日全国旅游热度综述（≤150字）
+- generate_daily_overview：上周全国旅游热度综述（结构化4段）
 - generate_city_analysis：单城市热度解读 + 出行小贴士（约100字）
 - generate_travel_recommend：目的地推荐（2-3个 + 简短理由）
 
@@ -122,15 +122,17 @@ def _ask(user_prompt: str, max_tokens: int) -> Optional[str]:
 # 核心功能一：每日综述
 # ---------------------------------------------------------------------------
 def generate_daily_overview(hotspot_data: dict) -> str:
-    """生成每日全国旅游热度综述（≤150字，客观专业）。
+    """生成上周全国旅游热度综述（结构化4段，客观专业）。
 
+    输出格式：4个段落，每段以加粗小标题 **【整体概览】** / **【梯队格局】** /
+    **【区域特征】** / **【趋势提示】** 开头，前端按 Markdown 渲染为加粗标题。
     hotspot_data 结构：{"date": str, "avg_mom": float, "top10": [城市热度字典]}
     """
     top10 = hotspot_data.get("top10") or []
     avg_mom = hotspot_data.get("avg_mom") or 0
 
     if not top10:
-        return "今天还没有热度数据，先去采集一波吧～"
+        return "上周暂无热度数据，先去采集一波吧～"
 
     city_line = "、".join(
         f"{c.get('city', '')}(热度{(c.get('heat_index') or 0):.0f})" for c in top10
@@ -138,25 +140,31 @@ def generate_daily_overview(hotspot_data: dict) -> str:
     rising = [c.get("city", "") for c in top10 if (c.get("mom_change") or 0) > 0][:3]
 
     user_prompt = (
-        f"请基于以下数据撰写一段150字以内的每日旅游热度综述：\n"
+        f"请基于以下数据撰写上周全国旅游热度综述，严格分为4个段落，"
+        f"每段开头使用加粗小标题（格式：**小标题**），正文2-3句：\n"
         f"TOP10城市热度：{city_line}。\n"
         f"全国整体热度环比：{float(avg_mom):+.1f}%。\n"
         f"热度环比上升的城市：{'、'.join(rising)}。\n"
-        f"要求：客观专业，重点突出整体热度变化、区域分布格局与头部城市特征，"
-        f"避免口语化和网络化表达，直接给出结论。"
+        f"段落内容要求：\n"
+        f"1. **【整体概览】**：上周全国旅游热度整体水平与走势基调；\n"
+        f"2. **【梯队格局】**：头部城市排名情况与梯队分层特征；\n"
+        f"3. **【区域特征】**：区域分布差异与城市群表现特点；\n"
+        f"4. **【趋势提示】**：后续热度预判与出行参考建议。\n"
+        f"要求：客观专业、条理清晰、直接给结论，避免口语化与网络化表达。"
     )
 
-    text = _ask(user_prompt, max_tokens=300)
+    text = _ask(user_prompt, max_tokens=400)
     if text:
         return text
 
-    # 本地兜底文案
+    # 本地兜底文案（同样结构化4段，与前端 Markdown 渲染兼容）
     top3 = "、".join(c.get("city", "") for c in top10[:3])
     trend_word = "热度整体上升" if float(avg_mom) > 0 else "热度整体回落"
     return (
-        f"当日全国旅游热度头部城市为{top3}，{trend_word}。"
-        f"综合热度最高的是{top10[0].get('city', '')}，"
-        f"热度分布呈向热门旅游城市集中的格局。"
+        f"**【整体概览】** 上周全国旅游热度{trend_word}，热度主要集中在{top3}等热门旅游城市。\n"
+        f"**【梯队格局】** 综合热度最高的是{top10[0].get('city', '')}，其余城市热度呈梯队分布。\n"
+        f"**【区域特征】** 热门城市覆盖多个区域，重点旅游城市群表现活跃。\n"
+        f"**【趋势提示】** 建议关注热度上升城市，出行前提前预订、错峰安排。"
     )
 
 

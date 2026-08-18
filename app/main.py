@@ -67,8 +67,8 @@ async def lifespan(app: FastAPI):
     if get_latest_date() != today:
         logger.info("当日暂无数据，启动时自动采集一次")
         run_daily_collect()  # 内部已含模拟数据兜底
-    # 每天凌晨 2 点自动执行数据采集
-    scheduler.add_job(run_daily_collect, "cron", hour=2, minute=0, id="daily_collect")
+    # 每周一凌晨 2 点自动执行数据采集
+    scheduler.add_job(run_daily_collect, "cron", day_of_week="mon", hour=2, minute=0, id="weekly_collect")
     scheduler.start()
     yield
     scheduler.shutdown()

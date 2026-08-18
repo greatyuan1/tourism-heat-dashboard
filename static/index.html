@@ -61,6 +61,7 @@
     .overview-card { margin-bottom: 16px; }
     .overview-text { font-size: 15px; line-height: 1.9; color: #d7e8fb; white-space: pre-wrap; }
     .overview-text .tag { color: var(--accent); font-weight: 600; }
+    .overview-text strong { color: var(--accent); font-weight: 700; }
     .skeleton { border-radius: 6px; height: 18px;
       background: linear-gradient(90deg, #12263f 25%, #1c3a5f 50%, #12263f 75%);
       background-size: 200% 100%; animation: shimmer 1.4s infinite; }
@@ -74,6 +75,21 @@
     .chart { width: 100%; height: 320px; }
     #chart-map { height: 100%; min-height: 560px; }
     .map-panel { height: 100%; }
+
+    /* ===== 地图双视角切换 ===== */
+    .map-switch { margin-left: auto; display: flex; gap: 6px; }
+    .map-switch-btn {
+      font-family: inherit; font-size: 12px; font-weight: 500; color: var(--text-dim);
+      background: #0a1830; border: 1px solid var(--panel-border);
+      border-radius: 7px; padding: 5px 12px; cursor: pointer;
+      transition: all .18s ease; white-space: nowrap;
+    }
+    .map-switch-btn:hover { color: var(--text); border-color: var(--accent); }
+    .map-switch-btn.active {
+      color: #04121f; font-weight: 700;
+      background: linear-gradient(90deg, #38bdf8, #22d3ee);
+      border-color: transparent;
+    }
 
     /* ===== 推荐表单 ===== */
     .form-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
@@ -117,6 +133,22 @@
 
     .empty { color: var(--text-dim); text-align: center; padding: 40px 0; }
 
+    /* ===== 数据说明（地图标题栏悬浮浮层） ===== */
+    .data-note-wrap { position: relative; }
+    .data-note-pop {
+      position: absolute; right: 0; top: calc(100% + 8px); width: 340px;
+      background: #0e1c33; border: 1px solid #24415f; border-radius: 12px;
+      padding: 14px 16px; z-index: 40; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      display: none;
+    }
+    .data-note-pop::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
+    .data-note-wrap:hover .data-note-pop { display: block; }
+    .data-note-pop-title { color: var(--text); font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+    .data-note-list { margin: 0; padding: 0; list-style: none; color: var(--text-dim); font-size: 12.5px; line-height: 2; }
+    .data-note-list li { position: relative; padding-left: 14px; }
+    .data-note-list li::before { content: ""; position: absolute; left: 0; top: 12px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.6; }
+    .data-note-list b { color: #a9c4e0; font-weight: 600; margin-right: 2px; }
+
     @media (max-width: 960px) {
       .main { grid-template-columns: 1fr; }
       #chart-map { min-height: 400px; }
@@ -130,12 +162,12 @@
     <header class="header">
       <div class="logo">全国旅游热度 AI 洞察看板</div>
       <div class="spacer"></div>
-      <div class="update-time">数据更新时间：<b id="update-time">—</b></div>
+      <div class="update-time">数据周期：<b id="update-time">—</b></div>
     </header>
 
     <!-- 顶部 AI 综述区 -->
     <section class="panel overview-card">
-      <h2>今日 AI 热度综述</h2>
+      <h2>上周 AI 热度综述</h2>
       <div id="overview-body">
         <div class="skeleton"></div>
         <div class="skeleton short"></div>
@@ -146,12 +178,29 @@
     <!-- 中间主体：左地图 + 右两图 -->
     <section class="main">
       <div class="panel map-panel">
-        <h2>全国城市热度热力图</h2>
+        <h2>全国城市热度热力图
+          <span class="map-switch" id="map-switch">
+            <button class="map-switch-btn active" data-mode="province">省级热力</button>
+            <button class="map-switch-btn" data-mode="city">城市热力</button>
+          </span>
+          <span class="data-note-wrap">
+            <button class="map-switch-btn">📊 数据说明</button>
+            <div class="data-note-pop">
+              <div class="data-note-pop-title">数据口径说明</div>
+              <ul class="data-note-list">
+                <li><b>更新频率</b>：每周一凌晨自动更新，统计上周全平台综合数据</li>
+                <li><b>热力值定义</b>：综合搜索指数、票务预订量、景区客流、社交声量多维度加权计算，满分100</li>
+                <li><b>覆盖范围</b>：全国30个重点旅游城市，省级维度按属地聚合</li>
+                <li><b>数据来源</b>：主流OTA平台、搜索引擎、社交平台公开数据聚合计算</li>
+              </ul>
+            </div>
+          </span>
+        </h2>
         <div id="chart-map"><div class="empty">地图加载中…</div></div>
       </div>
       <div class="right-col">
         <div class="panel">
-          <h2>TOP10 热门城市</h2>
+          <h2>TOP10 热门城市（上周数据）</h2>
           <div class="chart" id="chart-top10"></div>
         </div>
         <div class="panel">
@@ -190,6 +239,7 @@
       </div>
       <div class="recommend-result" id="recommend-result">填写偏好，点击按钮获取 AI 推荐～</div>
     </section>
+
   </div>
 
   <!-- 城市详情弹窗 -->
@@ -208,8 +258,30 @@
   <script>
     // ===== 全局状态 =====
     const GEO_URL = '/static/china.json';  // 本地城市级 GeoJSON（已合并直辖市+地级市）
+    const PROVINCE_GEO_URL = 'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json'; // DataV 省级 GeoJSON
     const state = { top10: [], trend: [] };
     const charts = {};
+
+    // 地图双视角状态
+    let mapMode = 'province';      // 当前视角：'city' | 'province'（默认省级）
+    let cityGeoJson = null;        // 城市级 GeoJSON
+    let provinceGeoJson = null;    // 省级 GeoJSON（首次切换时懒加载并缓存）
+    let heatRows = [];             // /api/map-data 的 30 城热度（两种视角复用）
+
+    // 城市 → 省份映射（省级视角聚合用，取省内最高热度）
+    const CITY_TO_PROVINCE = {
+      '北京': '北京市', '上海': '上海市', '天津': '天津市', '重庆': '重庆市',
+      '广州': '广东省', '深圳': '广东省', '珠海': '广东省',
+      '成都': '四川省', '杭州': '浙江省', '西安': '陕西省',
+      '长沙': '湖南省', '张家界': '湖南省',
+      '南京': '江苏省', '苏州': '江苏省',
+      '武汉': '湖北省', '青岛': '山东省', '三亚': '海南省',
+      '昆明': '云南省', '丽江': '云南省', '厦门': '福建省',
+      '哈尔滨': '黑龙江省', '桂林': '广西壮族自治区',
+      '郑州': '河南省', '大连': '辽宁省', '贵阳': '贵州省',
+      '拉萨': '西藏自治区', '乌鲁木齐': '新疆维吾尔自治区',
+      '黄山': '安徽省', '呼和浩特': '内蒙古自治区', '银川': '宁夏回族自治区',
+    };
 
     function el(id) { return document.getElementById(id); }
     function initChart(id) {
@@ -229,7 +301,7 @@
     function showMapStatus(msg) {
       el('chart-map').innerHTML = '<div class="empty">' + msg + '</div>';
     }
-    // 全国城市热度热力图：简单顺序 async/await，无状态对象与守卫
+    // ===== 全国城市热度热力图（支持省级/城市级双视角切换） =====
     async function initMap() {
       const container = el('chart-map');
       if (typeof echarts === 'undefined') { showMapStatus('图表库 echarts 加载失败，请检查网络'); return; }
@@ -239,86 +311,153 @@
       chart.showLoading({ text: '加载中…', color: '#22d3ee', textColor: '#8aa8c8', maskColor: 'rgba(4,10,22,0.6)', fontSize: 13 });
 
       try {
-        // ① 拉取 GeoJSON
+        // ① 拉取城市级 GeoJSON 并注册
         const geoRes = await fetch(GEO_URL);
         if (!geoRes.ok) throw new Error('地图资源不可用（HTTP ' + geoRes.status + '）');
-        const geoJson = await geoRes.json();
+        cityGeoJson = await geoRes.json();
+        echarts.registerMap('china', cityGeoJson);
 
-        // ② 注册地图
-        echarts.registerMap('china', geoJson);
-
-        // ③ 拉取城市热度数据
+        // ② 拉取城市热度数据（两种视角复用同一份）
         const dataRes = await fetch('/api/map-data');
         if (!dataRes.ok) throw new Error('热度接口不可用（HTTP ' + dataRes.status + '）');
         const dataJson = await dataRes.json();
         if (dataJson.code !== 0) throw new Error(dataJson.msg || '热度数据异常');
-        // 兼容两种返回结构：data 直接是数组，或 data 是 {date, data:[...]}
         const payload = dataJson.data;
-        const rows = Array.isArray(payload) ? payload : ((payload && payload.data) || []);
-        if (!Array.isArray(rows) || rows.length === 0) throw new Error('暂无热度数据，请先执行数据采集');
+        heatRows = Array.isArray(payload) ? payload : ((payload && payload.data) || []);
+        if (!Array.isArray(heatRows) || heatRows.length === 0) throw new Error('暂无热度数据，请先执行数据采集');
 
-        // ④ 名称兼容匹配：兼容「北京」「北京市」两种格式，并打印匹配结果
-        const geoNames = new Set(geoJson.features.map(f => f.properties && f.properties.name));
-        const matchName = city => {
-          if (geoNames.has(city)) return city;
-          for (const suffix of ['市', '省', '自治区', '特别行政区']) {
-            if (geoNames.has(city + suffix)) return city + suffix;
-          }
-          return null; // null 表示未匹配到地图要素
-        };
-        const matched = [];
-        const unmatched = [];
-        const data = [];
-        rows.forEach(r => {
-          const city = r.city || r.name;
-          const mapName = matchName(city);
-          if (mapName) { matched.push(city); data.push({ name: mapName, city: city, value: r.value }); }
-          else { unmatched.push(city); }
-        });
-        console.log('[地图] 匹配成功 ' + matched.length + ' 城：' + matched.join('、'));
-        if (unmatched.length) console.warn('[地图] 匹配失败 ' + unmatched.length + ' 城：' + unmatched.join('、'));
-        if (!data.length) throw new Error('城市名称与地图要素均未匹配，请检查名称规则');
-
-        // ⑤ 配置并渲染热力图，隐藏加载提示
-        const values = data.map(d => d.value);
-        const min = Math.floor(Math.min(...values) / 5) * 5;
-        const max = Math.ceil(Math.max(...values) / 5) * 5;
+        // ③ 渲染当前视角（默认城市级）
         chart.hideLoading();
-        chart.setOption({
-          backgroundColor: 'transparent',
-          tooltip: {
-            trigger: 'item',
-            formatter: p => p.data.city
-              ? `${p.data.city}<br/>综合热度：<b>${p.value}</b>`
-              : p.name + '<br/>暂无数据',
-          },
-          visualMap: {
-            min, max, left: 16, bottom: 12, text: ['高', '低'],
-            textStyle: { color: textColor() }, calculable: true, itemWidth: 12, itemHeight: 120,
-            inRange: { color: ['#1e3a8a', '#0ea5e9', '#10b981', '#eab308', '#ef4444'] },
-          },
-          series: [{
-            type: 'map', map: 'china', roam: true, zoom: 1.08, data,
-            label: { show: false },
-            itemStyle: { borderColor: '#0a1428', borderWidth: 0.6, areaColor: '#12263f' },
-            emphasis: { label: { show: true, color: '#fff', fontSize: 11 }, itemStyle: { areaColor: '#f59e0b' } },
-          }],
-        });
-        chart.off('click');
-        chart.on('click', p => { if (p.data && p.data.city) openCityModal(p.data.city); });
+        renderMap();
       } catch (e) {
-        // 任何一步失败：清理图表并显示明确错误，绝不留"加载中"
         chart.dispose();
         delete charts['chart-map'];
         showMapStatus('地图加载失败：' + (e && e.message ? e.message : e));
       }
+    }
+
+    function renderMap() {
+      const chart = charts['chart-map']; if (!chart) return;
+      if (mapMode === 'province') { renderProvinceMap(chart); }
+      else { renderCityMap(chart); }
+    }
+
+    function renderCityMap(chart) {
+      if (!cityGeoJson) return;
+      chart.hideLoading(); // 清除可能残留的加载态（如省级地图懒加载中切回城市）
+      // 城市名 → GeoJSON 要素名匹配：兼容「北京」「北京市」两种格式，并打印匹配结果
+      const geoNames = new Set(cityGeoJson.features.map(f => f.properties && f.properties.name));
+      const matchName = city => {
+        if (geoNames.has(city)) return city;
+        for (const suffix of ['市', '省', '自治区', '特别行政区']) {
+          if (geoNames.has(city + suffix)) return city + suffix;
+        }
+        return null;
+      };
+      const matched = [];
+      const unmatched = [];
+      const data = [];
+      heatRows.forEach(r => {
+        const city = r.city || r.name;
+        const mapName = matchName(city);
+        if (mapName) { matched.push(city); data.push({ name: mapName, city: city, value: r.value }); }
+        else { unmatched.push(city); }
+      });
+      console.log('[地图·城市] 匹配成功 ' + matched.length + ' 城：' + matched.join('、'));
+      if (unmatched.length) console.warn('[地图·城市] 匹配失败 ' + unmatched.length + ' 城：' + unmatched.join('、'));
+      if (!data.length) { console.error('[地图·城市] 无任何匹配城市，跳过渲染'); return; }
+      setMapOption(chart, 'china', data, true);
+    }
+
+    async function renderProvinceMap(chart) {
+      // 首次切换到省级时懒加载省级 GeoJSON，之后走缓存
+      if (!provinceGeoJson) {
+        chart.showLoading({ text: '加载省级地图…', color: '#22d3ee', textColor: '#8aa8c8', maskColor: 'rgba(4,10,22,0.6)', fontSize: 13 });
+        try {
+          const res = await fetch(PROVINCE_GEO_URL);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          provinceGeoJson = await res.json();
+          echarts.registerMap('china-province', provinceGeoJson);
+        } catch (e) {
+          chart.hideLoading();
+          console.error('[地图·省级] 省级地图加载失败：', e);
+          switchMapMode('city'); // 回退到城市视角
+          return;
+        }
+        chart.hideLoading();
+      }
+      if (mapMode !== 'province') return; // 用户已切回城市，放弃本次渲染
+
+      // 城市热度按省份聚合，取省内最高热度
+      const agg = {};
+      heatRows.forEach(r => {
+        const prov = CITY_TO_PROVINCE[r.city || r.name];
+        if (!prov) return;
+        const v = Number(r.value) || 0;
+        if (!(prov in agg) || v > agg[prov]) agg[prov] = v;
+      });
+      const data = Object.keys(agg).map(p => ({ name: p, province: p, value: agg[p] }));
+      console.log('[地图·省级] 聚合 ' + data.length + ' 个省级区域：' + data.map(d => d.name).join('、'));
+      if (!data.length) { switchMapMode('city'); return; }
+      setMapOption(chart, 'china-province', data, false);
+    }
+
+    function setMapOption(chart, mapName, data, interactive) {
+      const values = data.map(d => d.value);
+      const min = Math.floor(Math.min(...values) / 5) * 5;
+      const max = Math.ceil(Math.max(...values) / 5) * 5;
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          formatter: p => {
+            if (p.data && p.data.city) return `${p.data.city}<br/>综合热度：<b>${p.value}</b>`;
+            if (p.data && p.data.province) return `${p.data.province}<br/>最高热度：<b>${p.value}</b>`;
+            return p.name + '<br/>暂无数据';
+          },
+        },
+        visualMap: {
+          min, max, left: 16, bottom: 12, text: ['高', '低'],
+          textStyle: { color: textColor() }, calculable: true, itemWidth: 12, itemHeight: 120,
+          inRange: { color: ['#1e3a8a', '#0ea5e9', '#10b981', '#eab308', '#ef4444'] },
+        },
+        series: [{
+          type: 'map', map: mapName, roam: true, zoom: 1.08, data,
+          label: { show: false },
+          itemStyle: { borderColor: '#0a1428', borderWidth: 0.6, areaColor: 'rgba(42, 52, 80, 0.6)' },
+          emphasis: { label: { show: true, color: '#fff', fontSize: 11 }, itemStyle: { areaColor: '#f59e0b' } },
+        }],
+      });
+      chart.off('click');
+      if (interactive) {
+        chart.on('click', p => { if (p.data && p.data.city) openCityModal(p.data.city); });
+      }
+    }
+
+    function switchMapMode(mode) {
+      if (mode === mapMode) return;
+      mapMode = mode;
+      document.querySelectorAll('#map-switch .map-switch-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+      renderMap();
+    }
+    // 数据周期展示：由后端最新数据日期推算「上周」完整自然周（周一至周日）
+    function formatWeekRange(latest) {
+      if (!latest) return '—';
+      const d = new Date(latest + 'T00:00:00');
+      if (isNaN(d.getTime())) return latest;
+      const dow = (d.getDay() + 6) % 7;          // 0=周一 … 6=周日
+      const thisMonday = new Date(d); thisMonday.setDate(d.getDate() - dow);
+      const lastMonday = new Date(thisMonday); lastMonday.setDate(thisMonday.getDate() - 7);
+      const lastSunday = new Date(lastMonday); lastSunday.setDate(lastMonday.getDate() + 6);
+      const fmt = x => `${x.getFullYear()}年${String(x.getMonth() + 1).padStart(2, '0')}月${String(x.getDate()).padStart(2, '0')}日`;
+      return `${fmt(lastMonday)} - ${fmt(lastSunday)}（上周）`;
     }
     async function loadOverview() {
       try {
         const j = await loadJSON('/api/overview');
         if (j.code !== 0) throw new Error(j.msg);
         state.top10 = j.data.top10 || [];
-        el('update-time').textContent = j.data.update_time || '—';
+        el('update-time').textContent = formatWeekRange(j.data.update_time);
         state.avgHeat = j.data.avg_heat;
         state.avgMom = j.data.avg_mom;
         renderTop10(); renderTrend();
@@ -330,20 +469,36 @@
         if (j.code !== 0) throw new Error(j.msg);
         state.trend = j.data || [];
         renderTrend();
-      } catch (e) { /* 兜底 */ }
+      } catch (e) { el('chart-trend').innerHTML = '<div class="empty">趋势数据加载失败，请确认后端已启动</div>'; }
     }
     async function loadDailyOverview() {
       const body = el('overview-body');
       try {
         const j = await loadJSON('/api/ai/daily-overview');
         if (j.code !== 0) throw new Error(j.msg);
-        body.innerHTML = '<div class="overview-text">' + escapeHtml(j.data.content) + '</div>';
+        body.innerHTML = '<div class="overview-text">' + renderMarkdown(j.data.content) + '</div>';
       } catch (e) {
         body.innerHTML = '<div class="overview-text">AI 综述加载失败，请确认后端已启动并配置 DEEPSEEK_API_KEY。</div>';
       }
     }
 
     // ===== 图表渲染（TOP10 / 7日趋势） =====
+    // 热力色阶分层：与地图 visualMap 的蓝→青→绿→黄→红色阶一致（0-100 满分区间）
+    function heatTier(v) {
+      v = Number(v) || 0;
+      if (v >= 80) return 4;
+      if (v >= 60) return 3;
+      if (v >= 40) return 2;
+      if (v >= 20) return 1;
+      return 0;
+    }
+    // TOP10 变动标注：单周数据下按「是否高于全国均值」判定 ↑/↓；
+    // 后续接入两周数据后，可将此处改为基于 row.mom_change 的环比升降判断，结构无需改动。
+    function arrowFor(row) {
+      const v = Number(row.heat_index) || 0;
+      const above = v >= (Number(state.avgHeat) || 0);
+      return { char: above ? '↑' : '↓', tier: heatTier(v) };
+    }
     function renderTop10() {
       if (!state.top10.length) return;
       const c = initChart('chart-top10'); if (!c) return;
@@ -352,7 +507,26 @@
         grid: { left: 6, right: 30, top: 6, bottom: 4, containLabel: true },
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: v => Number(v).toFixed(1) },
         xAxis: { type: 'value', splitLine: { lineStyle: { color: '#16324f' } }, axisLabel: { color: textColor() } },
-        yAxis: { type: 'category', data: data.map(d => d.city), axisLabel: { color: '#d7e8fb' }, axisLine: { lineStyle: { color: '#1c3553' } } },
+        yAxis: {
+          type: 'category', data: data.map(d => d.city),
+          axisLine: { lineStyle: { color: '#1c3553' } },
+          axisLabel: {
+            formatter: city => {
+              const row = data.find(d => d.city === city);
+              if (!row) return city;
+              const { char, tier } = arrowFor(row);
+              return `{city|${city}}{arrow${tier}| ${char}}`;
+            },
+            rich: {
+              city: { color: '#d7e8fb', fontSize: 13 },
+              arrow0: { color: '#1e3a8a', fontSize: 13, fontWeight: 700 },
+              arrow1: { color: '#0ea5e9', fontSize: 13, fontWeight: 700 },
+              arrow2: { color: '#10b981', fontSize: 13, fontWeight: 700 },
+              arrow3: { color: '#eab308', fontSize: 13, fontWeight: 700 },
+              arrow4: { color: '#ef4444', fontSize: 13, fontWeight: 700 },
+            },
+          },
+        },
         series: [{
           type: 'bar', data: data.map(d => d.heat_index), barWidth: '58%',
           itemStyle: { borderRadius: [0, 6, 6, 0], color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
@@ -363,10 +537,16 @@
     }
 
     function renderTrend() {
-      if (!state.trend.length) return;
+      // 仅统计有效的热度数据点（avg_heat 必须是有限数值）
+      const points = (state.trend || []).filter(d => d && typeof d.avg_heat === 'number' && isFinite(d.avg_heat));
+      if (points.length < 2) {
+        el('chart-trend').innerHTML = '<div class="empty">历史数据每日自动累计，次日起可查看完整趋势</div>';
+        return;
+      }
+      el('chart-trend').innerHTML = ''; // 清空空状态占位，避免与折线图重叠
       const c = initChart('chart-trend'); if (!c) return;
-      const labels = state.trend.map(d => d.date.slice(5));
-      const values = state.trend.map(d => d.avg_heat);
+      const labels = points.map(d => (d.date || '').slice(5));
+      const values = points.map(d => d.avg_heat);
       c.setOption({
         grid: { left: 6, right: 16, top: 20, bottom: 4, containLabel: true },
         tooltip: { trigger: 'axis' },
@@ -436,19 +616,30 @@
           }),
         });
         const j = await res.json();
-        result.textContent = j.code === 0 ? j.data.content : j.msg;
+        result.innerHTML = j.code === 0 ? renderMarkdown(j.data.content) : escapeHtml(j.msg || '推荐失败');
       } catch (e) {
         result.textContent = '推荐失败，请确认后端已启动并配置 DEEPSEEK_API_KEY。';
       } finally { btn.disabled = false; }
     }
 
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    // 渲染 AI 返回的轻量 Markdown：**加粗** → <strong>，换行 → <br>，先转义再替换保证安全
+    function renderMarkdown(s) {
+      return escapeHtml(s)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+    }
 
     // ===== 事件与启动 =====
     el('btn-recommend').addEventListener('click', askRecommend);
     el('modal-close').addEventListener('click', () => el('modal-mask').classList.remove('show'));
     el('modal-mask').addEventListener('click', e => { if (e.target === el('modal-mask')) el('modal-mask').classList.remove('show'); });
     window.addEventListener('resize', () => Object.values(charts).forEach(c => c && c.resize()));
+
+    // 地图双视角切换按钮
+    document.querySelectorAll('#map-switch .map-switch-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchMapMode(btn.dataset.mode));
+    });
 
     // 启动：脚本位于 body 末尾，DOM 已就绪；地图顺序执行，其余并行加载
     initMap();
