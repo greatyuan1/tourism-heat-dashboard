@@ -25,10 +25,10 @@ DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEFAULT_MODEL = "deepseek-chat"
 TIMEOUT = 60
 
-# 系统提示词：口语化、实用的旅游助手语气
+# 系统提示词：客观、专业的旅游行业数据分析师语气
 SYSTEM_PROMPT = (
-    "你是一个接地气的旅游小助手，说话自然实在、不端着、不打官腔，"
-    "用普通游客听得懂的大白话分析旅游热度、给出行建议。"
+    "你是一名专业的旅游行业数据分析师，擅长从城市旅游热度数据中提炼客观、专业的洞察。"
+    "表达准确、条理清晰，避免口语化与网络化表述。"
 )
 
 # 城市代表性景区（用于充实城市解读与推荐，后续可接入高德 POI 替换）
@@ -122,7 +122,7 @@ def _ask(user_prompt: str, max_tokens: int) -> Optional[str]:
 # 核心功能一：每日综述
 # ---------------------------------------------------------------------------
 def generate_daily_overview(hotspot_data: dict) -> str:
-    """生成每日全国旅游热度综述（≤150字，通俗易懂）。
+    """生成每日全国旅游热度综述（≤150字，客观专业）。
 
     hotspot_data 结构：{"date": str, "avg_mom": float, "top10": [城市热度字典]}
     """
@@ -135,13 +135,15 @@ def generate_daily_overview(hotspot_data: dict) -> str:
     city_line = "、".join(
         f"{c.get('city', '')}(热度{(c.get('heat_index') or 0):.0f})" for c in top10
     )
-    rising = [c.get("city", "") for c in top10 if (c.get("mom_change") or 0) > 5][:3]
+    rising = [c.get("city", "") for c in top10 if (c.get("mom_change") or 0) > 0][:3]
 
     user_prompt = (
-        f"今天全国旅游热度TOP10：{city_line}。全国整体热度环比{float(avg_mom):+.1f}%。"
-        + (f"热度上升明显的城市：{'、'.join(rising)}。" if rising else "")
-        + "请用大白话写一段150字以内的每日旅游热度综述，"
-          "告诉普通游客今天哪些地方最火、大致什么原因、适合去哪儿，语气轻松自然。"
+        f"请基于以下数据撰写一段150字以内的每日旅游热度综述：\n"
+        f"TOP10城市热度：{city_line}。\n"
+        f"全国整体热度环比：{float(avg_mom):+.1f}%。\n"
+        f"热度环比上升的城市：{'、'.join(rising)}。\n"
+        f"要求：客观专业，重点突出整体热度变化、区域分布格局与头部城市特征，"
+        f"避免口语化和网络化表达，直接给出结论。"
     )
 
     text = _ask(user_prompt, max_tokens=300)
@@ -150,10 +152,11 @@ def generate_daily_overview(hotspot_data: dict) -> str:
 
     # 本地兜底文案
     top3 = "、".join(c.get("city", "") for c in top10[:3])
-    trend_word = "热度整体在上升" if float(avg_mom) > 0 else "热度整体略有回落"
+    trend_word = "热度整体上升" if float(avg_mom) > 0 else "热度整体回落"
     return (
-        f"今天全国最火的是{top3}，{trend_word}。"
-        f"想感受热闹可以去{top10[0].get('city', '')}，想清静点不妨错峰出行。"
+        f"当日全国旅游热度头部城市为{top3}，{trend_word}。"
+        f"综合热度最高的是{top10[0].get('city', '')}，"
+        f"热度分布呈向热门旅游城市集中的格局。"
     )
 
 
@@ -180,10 +183,11 @@ def generate_city_analysis(city_name: str, city_data: dict) -> str:
         trend_desc = "暂无近7天数据"
 
     user_prompt = (
-        f"城市「{city_name}」当前综合热度{(heat_now):.0f}分（环比{float(mom):+.1f}%）。"
-        f"近7天热度变化：{trend_desc}。"
-        f"热门景区：{'、'.join(scenic) if scenic else '暂无'}。"
-        "请用100字左右写一段该城市的热度解读，再附一句出行小贴士，口语化、实用。"
+        f"请针对城市「{city_name}」撰写一段100字以内的热度解读与出行建议：\n"
+        f"当前综合热度{(heat_now):.0f}（环比{float(mom):+.1f}%）。\n"
+        f"近7天热度变化：{trend_desc}。\n"
+        f"代表性景区：{'、'.join(scenic) if scenic else '暂无'}。\n"
+        f"要求：简洁实用，聚焦热度趋势与游玩建议，语气平实客观。"
     )
 
     text = _ask(user_prompt, max_tokens=250)
@@ -191,9 +195,9 @@ def generate_city_analysis(city_name: str, city_data: dict) -> str:
         return text
 
     # 本地兜底文案
-    trend_word = "热度在回升" if float(mom) > 0 else "热度比较平稳或略有回落"
-    tip = f"建议早点订票、错峰游览{'、'.join(scenic)}" if scenic else "建议错峰出行"
-    return f"{city_name}目前{trend_word}（热度{(heat_now):.0f}分）。{tip}。"
+    trend_word = "热度呈上升趋势" if float(mom) > 0 else "热度较为平稳或有所回落"
+    tip = f"建议提前预订、错峰游览{'、'.join(scenic)}" if scenic else "建议错峰出行"
+    return f"{city_name}当前综合热度{(heat_now):.0f}，{trend_word}。{tip}。"
 
 
 # ---------------------------------------------------------------------------
@@ -216,10 +220,11 @@ def generate_travel_recommend(user_pref: dict, all_data: List[dict]) -> str:
     )
 
     user_prompt = (
-        f"游客从{origin}出发，打算玩{days}天，预算{budget}，喜欢{preference}。"
-        f"当前热门城市：{city_line}。"
-        "请结合热度数据推荐2-3个目的地，每个目的地附一句简短实在的理由，"
-        "总字数150字以内，直接给结论别啰嗦。"
+        f"请根据以下信息推荐2-3个旅游目的地：\n"
+        f"用户条件：出发地{origin}，游玩{days}天，预算{budget}，偏好{preference}。\n"
+        f"当前热门城市热度：{city_line}。\n"
+        f"要求：逻辑清晰、结构规整，每个目的地附一句结合热度数据的推荐理由，"
+        f"总字数150字以内。"
     )
 
     text = _ask(user_prompt, max_tokens=350)
@@ -228,11 +233,11 @@ def generate_travel_recommend(user_pref: dict, all_data: List[dict]) -> str:
 
     # 本地兜底文案
     if not hot_cities:
-        return "暂时没有可推荐的热度数据，稍后再试吧～"
+        return "暂无可推荐的热度数据，请稍后再试。"
     parts = []
-    for c in hot_cities[:3]:
+    for i, c in enumerate(hot_cities[:3], 1):
         city = c.get("city", "")
         spots = get_scenic_spots(city)
-        spot_line = f"（{'、'.join(spots)}等值得一逛）" if spots else ""
-        parts.append(f"{city}：热度{(c.get('heat_index') or 0):.0f}，人气正旺{spot_line}")
-    return f"结合你的需求，推荐这几个：{'；'.join(parts)}。"
+        spot_line = f"（代表性景区：{'、'.join(spots)}）" if spots else ""
+        parts.append(f"{i}. {city}：综合热度{(c.get('heat_index') or 0):.0f}{spot_line}")
+    return "综合当前热度数据，推荐以下目的地：\n" + "\n".join(parts)
