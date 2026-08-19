@@ -35,11 +35,9 @@
 
     /* ===== 顶栏 ===== */
     .header { display: flex; align-items: center; gap: 14px; padding: 8px 4px 18px; }
-    .header .title-block { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-    .header .logo { font-size: 18px; font-weight: 800; letter-spacing: 0.5px;
+    .header .logo { font-size: 26px; font-weight: 800; letter-spacing: 0.5px;
       background: linear-gradient(90deg, #38bdf8, #22d3ee, #34d399);
       -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .header .tagline { margin: 0; font-size: 13px; line-height: 1.7; color: var(--text-dim); }
     .header .spacer { flex: 1; }
     .update-time { color: var(--text-dim); font-size: 13px; }
     .update-time b { color: var(--accent); font-weight: 700; }
@@ -59,15 +57,15 @@
     .panel h2::before { content: ""; width: 4px; height: 16px; border-radius: 2px;
       background: linear-gradient(var(--accent), var(--accent-2)); }
 
-    /* ===== AI 综述卡 ===== */
-    .overview-card { margin-bottom: 16px; }
+    /* ===== 顶部综述区（市场分析 + 运营建议 两板块） ===== */
+    .overview-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
     .overview-text { font-size: 15px; line-height: 1.9; color: #d7e8fb; white-space: pre-wrap; }
     .overview-text .tag { color: var(--accent); font-weight: 600; }
     .overview-text strong { color: var(--accent); font-weight: 700; }
     .overview-text .hl-heat { color: #22d3ee; font-weight: 600; }
     .overview-text .hl-city { color: #fbbf24; font-weight: 700; }
     .overview-text .hl-num { color: #60a5fa; }
-    .overview-text .ops-scenario { margin: 4px 0; padding-left: 12px; border-left: 3px solid var(--accent); }
+    .overview-text .ops-scene { color: var(--accent); font-weight: 700; }
     .skeleton { border-radius: 6px; height: 18px;
       background: linear-gradient(90deg, #12263f 25%, #1c3a5f 50%, #12263f 75%);
       background-size: 200% 100%; animation: shimmer 1.4s infinite; }
@@ -75,25 +73,29 @@
     .skeleton.short { width: 55%; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-    /* ===== 顶部数据口径说明 ===== */
-    .spec-card { display: grid; grid-template-columns: repeat(2, 1fr); margin-bottom: 16px; }
-    .spec-side { display: flex; flex-direction: column; justify-content: flex-start; }
-    .spec-side + .spec-side { border-left: 1px solid var(--panel-border); padding-left: 32px; }
-    .spec-side h3 {
+    /* ===== 顶部信息板块（看板定位 / 核心口径 / 计算规则 / 适用群体） ===== */
+    .spec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; align-items: stretch; }
+    .spec-block { display: flex; flex-direction: column; }
+    .spec-block h3 {
       font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 14px;
       display: flex; align-items: center; gap: 8px;
     }
-    .spec-side h3::before { content: ""; width: 4px; height: 14px; border-radius: 2px;
+    .spec-block h3::before { content: ""; width: 4px; height: 14px; border-radius: 2px;
       background: linear-gradient(var(--accent), var(--accent-2)); }
-    .spec-items { display: flex; flex-wrap: wrap; gap: 22px; }
-    .spec-item .k { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+    .spec-desc { margin: 0; font-size: 13px; line-height: 1.9; color: #d7e8fb; }
+    .spec-block h3.sub { margin: 16px 0 12px; }
+    .spec-items { display: flex; flex-direction: column; gap: 10px; }
+    .spec-item .k { font-size: 12px; color: var(--text-dim); margin-bottom: 2px; }
     .spec-item .v { font-size: 14px; color: var(--text); font-weight: 600; line-height: 1.5; }
-    .spec-formula { margin: 0; font-size: 15px; line-height: 1.9; color: var(--text); }
+    .spec-formula { margin: 0; font-size: 14px; line-height: 1.9; color: var(--text); }
     .spec-formula .f-main { color: var(--accent); font-weight: 600; }
     .spec-formula .f-w { color: var(--accent); font-weight: 600; }
     .spec-foot { margin: 10px 0 0; padding: 0; list-style: none; color: var(--text-dim); font-size: 12px; line-height: 1.8; }
     .spec-foot li { position: relative; padding-left: 12px; }
     .spec-foot li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); opacity: 0.5; }
+    .audience-list { margin: 0; padding: 0; list-style: none; color: #d7e8fb; font-size: 13px; line-height: 2; }
+    .audience-list li { position: relative; padding-left: 14px; }
+    .audience-list li::before { content: ""; position: absolute; left: 0; top: 12px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.6; }
 
     /* ===== 主体分栏 ===== */
     .main { display: grid; grid-template-columns: 70fr 30fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
@@ -112,16 +114,24 @@
     }
     .ghost-btn:hover { color: var(--text); border-color: var(--accent); }
 
-    /* ===== 核心城市运营策略指引 ===== */
+    /* ===== 重点城市运营策略 ===== */
+    .panel-sub { margin: -6px 0 14px; font-size: 12px; color: var(--text-dim); line-height: 1.6; }
     .ops-dynamics { display: flex; flex-direction: column; gap: 10px; }
+    .ops-head { display: grid; grid-template-columns: 250px 1fr 1.25fr; gap: 20px; padding: 0 16px; font-size: 12px; color: var(--text-dim); }
     .ops-row {
-      display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 20px;
+      display: grid; grid-template-columns: 250px 1fr 1.25fr; align-items: center; gap: 20px;
       background: #0a1830; border: 1px solid var(--panel-border);
       border-radius: 10px; padding: 12px 16px;
     }
-    .ops-left { display: flex; align-items: center; gap: 12px; min-width: 0; white-space: nowrap; }
+    .ops-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .ops-rank {
+      width: 22px; height: 22px; flex: none; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: #062033;
+      background: linear-gradient(135deg, #38bdf8, #22d3ee);
+    }
     .ops-city { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; }
-    .ops-heat { font-size: 13px; color: var(--accent); font-weight: 600; white-space: nowrap; }
+    .ops-heat { font-size: 12px; color: var(--accent); font-weight: 600; white-space: nowrap; }
     .ops-tag {
       font-size: 12px; color: #bfe0ff; font-weight: 600; white-space: nowrap;
       background: linear-gradient(90deg, rgba(56, 189, 248, 0.16), rgba(34, 211, 238, 0.16));
@@ -129,7 +139,7 @@
       border-radius: 999px; padding: 2px 10px;
     }
     .ops-driver { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
-    .ops-action { font-size: 13px; color: var(--text-dim); text-align: right; line-height: 1.6; }
+    .ops-action { font-size: 13px; color: #bfe0ff; line-height: 1.6; }
 
     /* ===== 城市详情弹窗 ===== */
     .modal-mask { position: fixed; inset: 0; background: rgba(3, 8, 18, 0.66);
@@ -176,12 +186,13 @@
 
     @media (max-width: 960px) {
       .main { grid-template-columns: 1fr; }
+      .overview-grid { grid-template-columns: 1fr; }
       .map-chart { min-height: 300px; }
       .header { flex-wrap: wrap; }
-      .spec-card { grid-template-columns: 1fr; }
-      .spec-side + .spec-side { border-left: none; padding-left: 0; border-top: 1px solid var(--panel-border); padding-top: 20px; }
+      .spec-grid { grid-template-columns: 1fr; }
       .ops-row { grid-template-columns: 1fr; gap: 8px; }
-      .ops-action { text-align: left; }
+      .ops-head { display: none; }
+      .ops-left { flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -189,17 +200,25 @@
   <div class="wrap">
     <!-- 顶部标题栏 -->
     <header class="header">
-      <div class="title-block">
-        <div class="logo">全国旅游热度运营看板</div>
-        <p class="tagline">面向旅游行业运营者的周度热度监测工具，辅助营销投放、目的地运营与供给调度决策</p>
-      </div>
+      <div class="logo">全国旅游热度运营看板</div>
       <div class="spacer"></div>
       <div class="update-time">数据周期：<b id="update-time">—</b></div>
     </header>
 
-    <!-- 顶部数据口径说明（通栏） -->
-    <section class="panel spec-card">
-      <div class="spec-side">
+    <!-- 顶部信息板块：看板定位 / 核心口径 / 计算规则 -->
+    <section class="spec-grid">
+      <div class="panel spec-block">
+        <h3>看板定位</h3>
+        <p class="spec-desc">面向旅游行业运营者的周度热度监测工具，辅助营销投放、目的地运营与供给调度决策</p>
+        <h3 class="sub">适用群体</h3>
+        <ul class="audience-list">
+          <li>旅游类互联网平台区域运营</li>
+          <li>旅游公司 / 旅行社运营</li>
+          <li>文旅部门 / 目的地营销机构</li>
+          <li>景区 / 酒店等供给端运营</li>
+        </ul>
+      </div>
+      <div class="panel spec-block">
         <h3>核心口径速览</h3>
         <div class="spec-items">
           <div class="spec-item">
@@ -216,7 +235,7 @@
           </div>
         </div>
       </div>
-      <div class="spec-side">
+      <div class="panel spec-block">
         <h3>热力值计算规则</h3>
         <p class="spec-formula"><span class="f-main">旅游热度指数 = 归一化( 搜索热度<span class="f-w">×30%</span> + 迁徙热度<span class="f-w">×40%</span> + 景区热度<span class="f-w">×30%</span> ) × 100</span></p>
         <ul class="spec-foot">
@@ -226,13 +245,22 @@
       </div>
     </section>
 
-    <!-- 顶部 AI 综述区 -->
-    <section class="panel overview-card">
-      <h2>上周 AI 热度综述</h2>
-      <div id="overview-body">
-        <div class="skeleton"></div>
-        <div class="skeleton short"></div>
-        <div class="skeleton"></div>
+    <!-- 顶部综述区：市场分析 + 运营建议 两板块 -->
+    <section class="overview-grid">
+      <div class="panel">
+        <h2>上周热度综述</h2>
+        <div id="overview-body">
+          <div class="skeleton"></div>
+          <div class="skeleton short"></div>
+          <div class="skeleton"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>运营策略建议</h2>
+        <div id="overview-advice">
+          <div class="skeleton"></div>
+          <div class="skeleton short"></div>
+        </div>
       </div>
     </section>
 
@@ -282,9 +310,10 @@
       </div>
     </section>
 
-    <!-- 底部 核心城市运营策略指引 -->
+    <!-- 底部 重点城市运营策略 -->
     <section class="panel">
-      <h2>核心城市运营策略指引</h2>
+      <h2>重点城市运营策略</h2>
+      <p class="panel-sub">基于当周热度 Top5 城市，拆解核心驱动因素并给出可落地的运营动作建议</p>
       <div class="ops-dynamics" id="ops-dynamics">
         <div class="empty">加载中…</div>
       </div>
@@ -301,7 +330,7 @@
       <div class="title" id="m-title">—</div>
       <div class="sub" id="m-sub">—</div>
       <div class="metrics" id="m-metrics"></div>
-      <div class="ai-title">AI 热度解读 · 出行小贴士</div>
+      <div class="ai-title">热度解读 · 出行小贴士</div>
       <div class="ai-body" id="m-ai">正在生成解读…</div>
     </div>
   </div>
@@ -554,13 +583,31 @@
     }
     async function loadDailyOverview() {
       const body = el('overview-body');
+      const advice = el('overview-advice');
       try {
         const j = await loadJSON('/api/ai/daily-overview');
         if (j.code !== 0) throw new Error(j.msg);
-        body.innerHTML = '<div class="overview-text">' + highlightOverview(renderMarkdown(j.data.content)) + '</div>';
+        const { analysis, advice: adviceText } = splitOverview(j.data.content);
+        body.innerHTML = '<div class="overview-text">' + highlightOverview(renderMarkdown(analysis)) + '</div>';
+        advice.innerHTML = adviceText
+          ? '<div class="overview-text">' + highlightOverview(renderMarkdown(adviceText)) + '</div>'
+          : '<div class="empty">暂无运营建议</div>';
       } catch (e) {
-        body.innerHTML = '<div class="overview-text">AI 综述加载失败，请确认后端已启动并配置 DEEPSEEK_API_KEY。</div>';
+        body.innerHTML = '<div class="overview-text">综述加载失败，请确认后端已启动并配置 DEEPSEEK_API_KEY。</div>';
+        advice.innerHTML = '<div class="overview-text">运营建议加载失败。</div>';
       }
+    }
+    // 将综述正文按「运营建议」小节拆成两段：市场分析 + 运营建议
+    function splitOverview(raw) {
+      const marker = '【运营建议】';
+      const idx = raw.indexOf(marker);
+      if (idx < 0) return { analysis: raw, advice: '' };
+      const analysis = raw.slice(0, idx).replace(/\*+\s*$/, '').trim();
+      const advice = raw.slice(idx)
+        .replace(/^【运营建议】\**/, '')   // 去掉「【运营建议】」标题与紧随的加粗星号
+        .replace(/^\s*\n\s*/, '')          // 再去掉标题行后的换行
+        .trim();
+      return { analysis, advice };
     }
 
     // ===== 图表渲染（TOP10 / 城市热度对比榜） =====
@@ -708,12 +755,17 @@
       });
     }
 
-    // 核心城市运营策略指引：取热度 Top5，三列结构（城市+热度+梯队 / 核心驱动因素 / 运营动作建议）
+    // 重点城市运营策略：取热度 Top5，带表头，三列（城市/热度梯队 + 核心驱动因素 + 运营动作建议）
     function renderOpsDynamics() {
       const box = el('ops-dynamics'); if (!box) return;
       const top5 = (state.top10 || []).slice(0, 5);
       if (!top5.length) { box.innerHTML = '<div class="empty">暂无城市热度数据，请先执行数据采集</div>'; return; }
-      box.innerHTML = top5.map(r => {
+      const head = `<div class="ops-head">
+        <span>城市 / 热度梯队</span>
+        <span>核心驱动因素</span>
+        <span>运营动作建议</span>
+      </div>`;
+      const rows = top5.map((r, i) => {
         const city = r.city || r.name || '—';
         const heat = Number(r.heat_index);
         const [driver, action] = CITY_OPS[city] || ['综合文旅消费驱动', '建议加大营销投放并关注承载预警'];
@@ -721,6 +773,7 @@
         const heatTxt = isFinite(heat) ? heat.toFixed(1) : '—';
         return `<div class="ops-row">
           <div class="ops-left">
+            <span class="ops-rank">${i + 1}</span>
             <span class="ops-city">${escapeHtml(city)}</span>
             <span class="ops-heat">热度 ${heatTxt}</span>
             <span class="ops-tag">${tier}</span>
@@ -729,6 +782,7 @@
           <div class="ops-action">${escapeHtml(action)}</div>
         </div>`;
       }).join('');
+      box.innerHTML = head + rows;
     }
 
     // ===== 城市详情弹窗 =====
@@ -778,8 +832,10 @@
         const bolded = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         // 剥离三场景行开头的序号/圆点符号（如 ·、•、-、*、1. 等），避免大模型输出带出奇怪前缀
         const stripped = bolded.replace(/^(?:[\s·•▪◦●○◆]+|[-*]\s*|\d+[.、)]\s*)/, '');
-        if (/^<strong>(营销投放|供给调度|用户运营)<\/strong>/.test(stripped)) {
-          return '<div class="ops-scenario">' + stripped + '</div>';
+        // 三场景标题统一渲染为【场景】形式（兼容 **加粗** 与【】两种输入）
+        const scene = stripped.match(/^(?:<strong>)?(?:【\s*)?(营销投放|供给调度|用户运营)(?:\s*】)?(?:<\/strong>)?\s*[:：]?\s*(.*)$/);
+        if (scene) {
+          return '<span class="ops-scene">【' + scene[1] + '】</span>' + scene[2];
         }
         return bolded;
       }).join('<br>');
