@@ -59,7 +59,7 @@
 
     /* ===== 顶部综述区（市场分析 + 运营建议 两板块） ===== */
     .overview-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
-    .overview-text { font-size: 15px; line-height: 1.9; color: #d7e8fb; white-space: pre-wrap; }
+    .overview-text { font-size: 15px; line-height: 1.75; color: #d7e8fb; white-space: pre-wrap; }
     .overview-text .tag { color: var(--accent); font-weight: 600; }
     .overview-text strong { color: var(--accent); font-weight: 700; }
     .overview-text .hl-heat { color: #22d3ee; font-weight: 600; }
@@ -77,13 +77,13 @@
     .spec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; align-items: stretch; }
     .spec-block { display: flex; flex-direction: column; }
     .spec-block h3 {
-      font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 14px;
+      font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 10px;
       display: flex; align-items: center; gap: 8px;
     }
     .spec-block h3::before { content: ""; width: 4px; height: 14px; border-radius: 2px;
       background: linear-gradient(var(--accent), var(--accent-2)); }
     .spec-desc { margin: 0; font-size: 13px; line-height: 1.9; color: #d7e8fb; }
-    .spec-block h3.sub { margin: 16px 0 12px; }
+    .spec-block h3.sub { margin: 12px 0 10px; }
     .spec-items { display: flex; flex-direction: column; gap: 10px; }
     .spec-item .k { font-size: 12px; color: var(--text-dim); margin-bottom: 2px; }
     .spec-item .v { font-size: 14px; color: var(--text); font-weight: 600; line-height: 1.5; }
@@ -93,7 +93,7 @@
     .spec-foot { margin: 10px 0 0; padding: 0; list-style: none; color: var(--text-dim); font-size: 12px; line-height: 1.8; }
     .spec-foot li { position: relative; padding-left: 12px; }
     .spec-foot li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); opacity: 0.5; }
-    .audience-list { margin: 0; padding: 0; list-style: none; color: #d7e8fb; font-size: 13px; line-height: 2; }
+    .audience-list { margin: 0; padding: 0; list-style: none; color: #d7e8fb; font-size: 13px; line-height: 1.75; }
     .audience-list li { position: relative; padding-left: 14px; }
     .audience-list li::before { content: ""; position: absolute; left: 0; top: 12px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.6; }
 
@@ -551,7 +551,7 @@
         if (j.code !== 0) throw new Error(j.msg);
         const analysis = j.data.analysis || '';
         const adviceText = j.data.advice || '';
-        body.innerHTML = '<div class="overview-text">' + highlightOverview(renderMarkdown(analysis.replace(/\n\s*\n/g, '\n'))) + '</div>';
+        body.innerHTML = '<div class="overview-text">' + highlightOverview(renderMarkdown(analysis.replace(/\n\s*\n/g, '\n').replace(/(\*\*[^*\n]+\*\*)\s*\n\s*/g, '$1 '))) + '</div>';
         advice.innerHTML = adviceText
           ? '<div class="overview-text">' + highlightOverview(renderMarkdown(adviceText.replace(/\n\s*\n/g, '\n'))) + '</div>'
           : '<div class="empty">暂无运营建议</div>';
