@@ -591,7 +591,7 @@
         const adviceText = j.data.advice || '';
         body.innerHTML = '<div class="overview-text">' + highlightOverview(renderMarkdown(analysis)) + '</div>';
         advice.innerHTML = adviceText
-          ? '<div class="overview-text">' + highlightOverview(renderMarkdown(adviceText)) + '</div>'
+          ? '<div class="overview-text">' + highlightOverview(renderMarkdown(adviceText.replace(/\n\s*\n/g, '\n'))) + '</div>'
           : '<div class="empty">暂无运营建议</div>';
       } catch (e) {
         body.innerHTML = '<div class="overview-text">综述加载失败，请确认后端已启动并配置 DEEPSEEK_API_KEY。</div>';

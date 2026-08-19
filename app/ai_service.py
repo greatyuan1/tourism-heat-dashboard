@@ -213,7 +213,11 @@ def _generate_advice(city_line: str, mom_line: str, rising_line: str) -> str:
         f"{rising_line}\n"
         f"要求：直接输出三个场景行，不要添加「运营建议」标题或任何说明文字；三个场景必须全部输出、内容完整、不得截断；语言精炼简洁，每条1句话。"
     )
-    return _ask(user_prompt, max_tokens=200) or ""
+    text = _ask(user_prompt, max_tokens=200)
+    if not text:
+        return ""
+    # 三个场景行之间去掉空行，保持紧凑
+    return "\n".join(ln.strip() for ln in text.split("\n") if ln.strip())
 
 
 # ---------------------------------------------------------------------------
