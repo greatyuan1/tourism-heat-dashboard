@@ -120,12 +120,14 @@ def _ask(user_prompt: str, max_tokens: int) -> Optional[str]:
 # ---------------------------------------------------------------------------
 # 核心功能一：每日综述
 # ---------------------------------------------------------------------------
-def generate_daily_overview(hotspot_data: dict) -> str:
-    """生成上周全国旅游热度运营分析（结构化4段，面向运营决策）。
+def generate_daily_overview(hotspot_data: dict) -> dict:
+    """生成上周全国旅游热度运营分析（面向运营决策）。
 
-    输出格式：4个段落，每段以加粗小标题 **【整体概览】** / **【梯队格局】** /
-    **【区域特征】** / **【运营建议】** 开头，前端按 Markdown 渲染为加粗标题。
-    【运营建议】分「营销投放 / 供给调度 / 用户运营」三个场景给出具体动作指引。
+    返回 {"analysis": str, "advice": str}，两部分独立生成：
+    - analysis：前三段（【整体概览】/【梯队格局】/【区域特征】）
+    - advice：三个场景（【营销投放】/【供给调度】/【用户运营】）
+    前端按两部分分块渲染，避免在客户端做字符串拆分。
+
     单周无历史数据时（has_history=False）：不提供环比数值、禁止编造「0.0%」，
     并在【整体概览】末尾补充「当前为单周基准数据…」的严谨说明。
     hotspot_data 结构：{"date": str, "avg_mom": float, "top10": [城市热度字典], "has_history": bool}
@@ -135,7 +137,7 @@ def generate_daily_overview(hotspot_data: dict) -> str:
     has_history = bool(hotspot_data.get("has_history", True))
 
     if not top10:
-        return "上周暂无热度数据，先去采集一波吧～"
+        return {"analysis": "上周暂无热度数据，先去采集一波吧～", "advice": ""}
 
     city_line = "、".join(
         f"{c.get('city', '')}(热度{(c.get('heat_index') or 0):.0f})" for c in top10
@@ -157,43 +159,61 @@ def generate_daily_overview(hotspot_data: dict) -> str:
             "也不得自行编造任何环比百分比；其余保持客观专业、条理清晰、直接给结论，避免口语化与网络化表达。"
         )
 
+    analysis = _generate_analysis(city_line, mom_line, rising_line, overview_extra, hard_rule)
+    advice = _generate_advice(city_line, mom_line, rising_line)
+
+    # 本地兜底文案（AI 调用失败时，两部分各自兜底，保持前端分块渲染不空）
+    if not analysis:
+        top3 = "、".join(c.get("city", "") for c in top10[:3])
+        if has_history:
+            trend_word = "整体上升" if float(avg_mom) > 0 else "整体回落"
+            overview_line = f"上周全国旅游热度{trend_word}，热度主要集中在{top3}等热门旅游城市。"
+        else:
+            overview_line = (
+                f"上周全国旅游热度主要集中在{top3}等热门旅游城市。"
+                "当前为单周基准数据，周环比变化指标将在累计两周数据后自动更新。"
+            )
+        analysis = (
+            f"**【整体概览】** {overview_line}\n"
+            f"**【梯队格局】** 综合热度最高的是{top10[0].get('city', '')}，其余城市热度呈梯队分布，头部城市受暑期亲子游、文博游等需求驱动。\n"
+            f"**【区域特征】** 热门城市覆盖多个区域，重点旅游城市群表现活跃，城市群协同运营价值较高。"
+        )
+    if not advice:
+        advice = (
+            f"【营销投放】建议重点投入热度上升城市，加大内容种草。\n"
+            f"【供给调度】对高热度城市提前预警景区承载量，优化住宿交通供给。\n"
+            f"【用户运营】引导游客错峰出行，平衡高峰体验与接待能力。"
+        )
+
+    return {"analysis": analysis, "advice": advice}
+
+
+def _generate_analysis(city_line: str, mom_line: str, rising_line: str, overview_extra: str, hard_rule: str) -> str:
+    """生成综述前三段（【整体概览】/【梯队格局】/【区域特征】），失败返回空串。"""
     user_prompt = (
-        f"请基于以下数据撰写上周全国旅游热度运营分析，严格分为4个段落，"
-        f"每段开头使用加粗小标题（格式：**小标题**）：\n"
+        f"请基于以下数据撰写上周全国旅游热度综述，严格分为3个段落，每段开头使用加粗小标题（格式：**小标题**）：\n"
         f"TOP10城市热度：{city_line}。\n"
         f"{mom_line}\n"
         f"{rising_line}\n"
         f"段落内容要求（面向文旅运营决策，从数据描述转向业务分析）：\n"
         f"1. **【整体概览】**：上周全国旅游热度整体水位与走势基调，并给出业务定性（如高位运行、温和增长、结构性分化）；{overview_extra}\n"
         f"2. **【梯队格局】**：头部城市排名情况与梯队分层特征，补充1句业务归因（如头部城市受暑期亲子游、文博游需求驱动）；\n"
-        f"3. **【区域特征】**：区域分布差异与城市群表现，补充城市群运营价值判断（如长三角城市群协同运营价值高）；\n"
-        f"4. **【运营建议】**：换行后完整输出三个场景，每个场景单独一行、以「【营销投放】」「【供给调度】」「【用户运营】」开头，各给出1条具体可执行的行动指引，不得省略或合并：\n"
-        f"   【营销投放】建议重点投入的城市与理由；\n"
-        f"   【供给调度】高热度城市的承载预警与优化方向；\n"
-        f"   【用户运营】错峰引导建议与体验平衡策略。\n"
-        f"硬性要求：{hard_rule}；语言精炼简洁，每段控制在1-2句话，全篇不超过250字；三个场景行前不得添加任何序号、圆点或符号前缀；【运营建议】三个场景必须全部输出、内容完整、不得截断。"
+        f"3. **【区域特征】**：区域分布差异与城市群表现，补充城市群运营价值判断（如长三角城市群协同运营价值高）。\n"
+        f"硬性要求：{hard_rule}；语言精炼简洁，每段控制在1-2句话，全篇不超过180字。"
     )
+    return _ask(user_prompt, max_tokens=350) or ""
 
-    text = _ask(user_prompt, max_tokens=500)
-    if text:
-        return text
 
-    # 本地兜底文案（同样结构化4段、带运营建议，与前端 Markdown 渲染兼容）
-    top3 = "、".join(c.get("city", "") for c in top10[:3])
-    if has_history:
-        trend_word = "整体上升" if float(avg_mom) > 0 else "整体回落"
-        overview_line = f"上周全国旅游热度{trend_word}，热度主要集中在{top3}等热门旅游城市。"
-    else:
-        overview_line = (
-            f"上周全国旅游热度主要集中在{top3}等热门旅游城市。"
-            "当前为单周基准数据，周环比变化指标将在累计两周数据后自动更新。"
-        )
-    return (
-        f"**【整体概览】** {overview_line}\n"
-        f"**【梯队格局】** 综合热度最高的是{top10[0].get('city', '')}，其余城市热度呈梯队分布，头部城市受暑期亲子游、文博游等需求驱动。\n"
-        f"**【区域特征】** 热门城市覆盖多个区域，重点旅游城市群表现活跃，城市群协同运营价值较高。\n"
-        f"**【运营建议】**\n【营销投放】建议重点投入热度上升城市，加大内容种草。\n【供给调度】对高热度城市提前预警景区承载量，优化住宿交通供给。\n【用户运营】引导游客错峰出行，平衡高峰体验与接待能力。"
+def _generate_advice(city_line: str, mom_line: str, rising_line: str) -> str:
+    """生成运营建议三场景（【营销投放】/【供给调度】/【用户运营】），失败返回空串。"""
+    user_prompt = (
+        f"请基于以下数据撰写上周文旅运营建议，严格输出三个场景，每个场景单独一行、以「【营销投放】」「【供给调度】」「【用户运营】」开头，各给出1条具体可执行的行动指引：\n"
+        f"TOP10城市热度：{city_line}。\n"
+        f"{mom_line}\n"
+        f"{rising_line}\n"
+        f"要求：直接输出三个场景行，不要添加「运营建议」标题或任何说明文字；三个场景必须全部输出、内容完整、不得截断；语言精炼简洁，每条1句话。"
     )
+    return _ask(user_prompt, max_tokens=200) or ""
 
 
 # ---------------------------------------------------------------------------

@@ -587,7 +587,8 @@
       try {
         const j = await loadJSON('/api/ai/daily-overview');
         if (j.code !== 0) throw new Error(j.msg);
-        const { analysis, advice: adviceText } = splitOverview(j.data.content);
+        const analysis = j.data.analysis || '';
+        const adviceText = j.data.advice || '';
         body.innerHTML = '<div class="overview-text">' + highlightOverview(renderMarkdown(analysis)) + '</div>';
         advice.innerHTML = adviceText
           ? '<div class="overview-text">' + highlightOverview(renderMarkdown(adviceText)) + '</div>'
@@ -596,18 +597,6 @@
         body.innerHTML = '<div class="overview-text">综述加载失败，请确认后端已启动并配置 DEEPSEEK_API_KEY。</div>';
         advice.innerHTML = '<div class="overview-text">运营建议加载失败。</div>';
       }
-    }
-    // 将综述正文按「运营建议」小节拆成两段：市场分析 + 运营建议
-    function splitOverview(raw) {
-      // 「运营建议」小节标题兼容多种格式：**【运营建议】** / **运营建议** / 【运营建议】
-      const m = raw.match(/\*{0,2}【?运营建议】?\*{0,2}/);
-      if (!m) return { analysis: raw, advice: '' };
-      const analysis = raw.slice(0, m.index).replace(/\*+\s*$/, '').trim();
-      const advice = raw.slice(m.index + m[0].length)
-        .replace(/^[:：]?/, '')   // 去掉标题后可能残留的冒号
-        .replace(/^\s*\n\s*/, '') // 再去掉标题行后的换行
-        .trim();
-      return { analysis, advice };
     }
 
     // ===== 图表渲染（TOP10 / 城市热度对比榜） =====

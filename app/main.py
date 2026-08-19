@@ -190,7 +190,8 @@ async def ai_daily_overview() -> dict:
         return fail("暂无数据")
 
     if latest in _ai_daily_cache:
-        return ok({"content": _ai_daily_cache[latest], "cached": True})
+        cached = _ai_daily_cache[latest]
+        return ok({"analysis": cached["analysis"], "advice": cached["advice"], "cached": True})
 
     rows = get_heat_by_date(latest, top_n=10)
     avg_mom = round(sum(r["mom_change"] or 0 for r in rows) / len(rows), 2) if rows else 0
@@ -203,7 +204,7 @@ async def ai_daily_overview() -> dict:
         "has_history": has_history,
     })
     _ai_daily_cache[latest] = content
-    return ok({"content": content, "cached": False})
+    return ok({"analysis": content["analysis"], "advice": content["advice"], "cached": False})
 
 
 @app.get("/api/ai/city/{city_name}")
