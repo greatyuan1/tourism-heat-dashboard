@@ -71,6 +71,24 @@
     .skeleton.short { width: 55%; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
+    /* ===== 顶部数据口径说明 ===== */
+    .spec-card { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px 32px; margin-bottom: 16px; }
+    .spec-side h3 {
+      font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .spec-side h3::before { content: ""; width: 4px; height: 14px; border-radius: 2px;
+      background: linear-gradient(var(--accent), var(--accent-2)); }
+    .spec-items { display: flex; flex-wrap: wrap; gap: 22px; }
+    .spec-item .k { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+    .spec-item .v { font-size: 14px; color: var(--text); font-weight: 600; line-height: 1.5; }
+    .spec-formula { margin: 0; font-size: 14px; line-height: 1.9; color: var(--text); }
+    .spec-formula .f-main { color: var(--accent); font-weight: 600; }
+    .spec-formula .f-w { color: #60a5fa; font-weight: 600; }
+    .spec-foot { margin: 10px 0 0; padding: 0; list-style: none; color: var(--text-dim); font-size: 12px; line-height: 1.8; }
+    .spec-foot li { position: relative; padding-left: 12px; }
+    .spec-foot li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); opacity: 0.5; }
+
     /* ===== 主体分栏 ===== */
     .main { display: grid; grid-template-columns: 70fr 30fr; gap: 16px; margin-bottom: 16px; }
     .right-col { display: flex; flex-direction: column; gap: 16px; }
@@ -93,25 +111,22 @@
       border-color: transparent;
     }
 
-    /* ===== 推荐表单 ===== */
-    .form-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
-    .field { display: flex; flex-direction: column; gap: 5px; }
-    .field label { font-size: 12px; color: var(--text-dim); }
-    .field input, .field select {
-      font-family: inherit; font-size: 13px; color: var(--text);
+    /* ===== 重点城市运营动态 ===== */
+    .ops-dynamics { display: flex; flex-direction: column; gap: 10px; }
+    .ops-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
       background: #0a1830; border: 1px solid var(--panel-border);
-      border-radius: 8px; padding: 9px 12px; min-width: 130px; outline: none;
+      border-radius: 10px; padding: 11px 16px;
     }
-    .field input:focus, .field select:focus { border-color: var(--accent); }
-    button.primary {
-      font-family: inherit; font-size: 14px; font-weight: 700; color: #04121f;
-      background: linear-gradient(90deg, #38bdf8, #22d3ee); border: none;
-      border-radius: 8px; padding: 10px 22px; cursor: pointer; white-space: nowrap;
+    .ops-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .ops-city { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; }
+    .ops-heat { font-size: 13px; color: var(--accent); font-weight: 600; white-space: nowrap; }
+    .ops-tag {
+      font-size: 12px; color: #04121f; font-weight: 600; white-space: nowrap;
+      background: linear-gradient(90deg, #38bdf8, #22d3ee);
+      border-radius: 6px; padding: 2px 8px;
     }
-    button.primary:hover { filter: brightness(1.08); }
-    button.primary:disabled { opacity: 0.6; cursor: not-allowed; }
-    .recommend-result { margin-top: 14px; min-height: 40px; color: #d7e8fb;
-      font-size: 14px; line-height: 1.9; white-space: pre-wrap; }
+    .ops-action { font-size: 13px; color: var(--text-dim); text-align: right; line-height: 1.6; }
 
     /* ===== 城市详情弹窗 ===== */
     .modal-mask { position: fixed; inset: 0; background: rgba(3, 8, 18, 0.66);
@@ -170,6 +185,35 @@
       <div class="update-time">数据周期：<b id="update-time">—</b></div>
     </header>
 
+    <!-- 顶部数据口径说明（通栏） -->
+    <section class="panel spec-card">
+      <div class="spec-side">
+        <h3>核心口径速览</h3>
+        <div class="spec-items">
+          <div class="spec-item">
+            <div class="k">数据周期</div>
+            <div class="v" id="spec-week">—</div>
+          </div>
+          <div class="spec-item">
+            <div class="k">更新频率</div>
+            <div class="v">每周一凌晨自动更新</div>
+          </div>
+          <div class="spec-item">
+            <div class="k">样本范围</div>
+            <div class="v">全国 30 个重点旅游城市</div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-side">
+        <h3>热力值计算规则</h3>
+        <p class="spec-formula"><span class="f-main">旅游热度指数 = 归一化( 搜索热度<span class="f-w">×30%</span> + 迁徙热度<span class="f-w">×40%</span> + 景区热度<span class="f-w">×30%</span> ) × 100</span></p>
+        <ul class="spec-foot">
+          <li>以当周所有样本城市的综合得分为基准做线性归一化，满分 100</li>
+          <li>分值越高，代表该城市当周旅游综合热度与出行吸引力越强</li>
+        </ul>
+      </div>
+    </section>
+
     <!-- 顶部 AI 综述区 -->
     <section class="panel overview-card">
       <h2>上周 AI 热度综述</h2>
@@ -194,14 +238,13 @@
               <div class="data-note-pop-title">数据口径说明</div>
               <ul class="data-note-list">
                 <li><b>更新频率</b>：每周一凌晨自动更新，统计上周全平台综合数据</li>
-                <li><b>热力值定义</b>：综合搜索指数、票务预订量、景区客流、社交声量多维度加权计算，满分100</li>
+                <li><b>热力值定义</b>：综合搜索热度、迁徙热度、景区热度三个维度加权计算，满分100</li>
                 <li><b>覆盖范围</b>：全国30个重点旅游城市，省级维度按属地聚合</li>
-                <li><b>数据来源</b>：综合四类公开数据加权计算
+                <li><b>数据来源</b>：综合三类公开数据加权计算
                   <ol class="data-source-list">
-                    <li>出行预订端：携程、去哪儿、飞猪公开的热门目的地榜单、周度预订热度指数</li>
-                    <li>搜索关注端：百度指数、微信搜一搜指数中，城市旅游相关关键词的周度搜索量</li>
-                    <li>客流消费端：重点5A景区公开接待数据、各地文旅部门发布的城市客流监测信息</li>
-                    <li>社交传播端：抖音、小红书平台公开的城市旅游话题周度播放量、笔记发布量</li>
+                    <li>搜索热度（30%）：百度指数「城市名+旅游」关键词的周度搜索量</li>
+                    <li>迁徙热度（40%）：百度迁徙 城市每日迁入规模指数</li>
+                    <li>景区热度（30%）：高德地图开放平台 城市热门景区平均热度</li>
                   </ol>
                 </li>
               </ul>
@@ -223,34 +266,12 @@
       </div>
     </section>
 
-    <!-- 底部 AI 推荐区 -->
+    <!-- 底部 重点城市运营动态 -->
     <section class="panel">
-      <h2>AI 目的地推荐</h2>
-      <div class="form-row">
-        <div class="field">
-          <label>出发地</label>
-          <input id="f-origin" placeholder="如：北京" />
-        </div>
-        <div class="field">
-          <label>游玩天数</label>
-          <select id="f-days">
-            <option>1</option><option>2</option><option selected>3</option>
-            <option>4</option><option>5</option><option>6</option><option>7</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>预算</label>
-          <select id="f-budget">
-            <option>经济</option><option selected>中等</option><option>充裕</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>喜好</label>
-          <input id="f-pref" placeholder="如：自然风光 / 美食 / 亲子" />
-        </div>
-        <button class="primary" id="btn-recommend">获取推荐</button>
+      <h2>重点城市运营动态</h2>
+      <div class="ops-dynamics" id="ops-dynamics">
+        <div class="empty">加载中…</div>
       </div>
-      <div class="recommend-result" id="recommend-result">填写偏好，点击按钮获取 AI 推荐～</div>
     </section>
 
   </div>
@@ -295,6 +316,40 @@
       '郑州': '河南省', '大连': '辽宁省', '贵阳': '贵州省',
       '拉萨': '西藏自治区', '乌鲁木齐': '新疆维吾尔自治区',
       '黄山': '安徽省', '呼和浩特': '内蒙古自治区', '银川': '宁夏回族自治区',
+    };
+
+    // 城市运营动态：热度特征标签 + 精简运营动作建议（前端静态映射，保证模块常显不依赖 AI）
+    const CITY_OPS = {
+      '北京': ['文旅强市', '建议加大文博游与暑期亲子营销投放'],
+      '上海': ['都市时尚', '建议联动商圈做强都市夜游主题推广'],
+      '广州': ['美食之都', '建议强化美食主题内容种草与短视频投放'],
+      '深圳': ['滨海都市', '建议预热主题乐园与滨海度假产品'],
+      '成都': ['休闲美食', '建议加大慢生活与大熊猫IP主题营销'],
+      '重庆': ['网红山城', '建议预警洪崖洞等核心景区承载量'],
+      '杭州': ['西湖名城', '建议加强淡旺季错峰引导与预约分流'],
+      '西安': ['文博古都', '建议强化大唐主题沉浸式体验推广'],
+      '长沙': ['夜经济热', '建议加大夜间文旅与美食营销投放'],
+      '南京': ['历史名城', '建议联动博物馆做研学游产品推广'],
+      '武汉': ['江城文旅', '建议强化东湖绿道休闲产品供给'],
+      '青岛': ['滨海热门', '建议预热暑期滨海度假与啤酒节营销'],
+      '三亚': ['滨海热门', '建议预警暑期客流并优化住宿供给'],
+      '昆明': ['避暑胜地', '建议主打避暑康养主题营销'],
+      '厦门': ['滨海文艺', '建议加大鼓浪屿错峰预约引导'],
+      '哈尔滨': ['冰雪名城', '建议开展反季避暑产品营销'],
+      '桂林': ['山水名城', '建议强化漓江生态游产品供给'],
+      '丽江': ['古城文旅', '建议预警古城景区承载量并限流'],
+      '苏州': ['园林名城', '建议加大园林夜游与研学推广'],
+      '天津': ['港口名城', '建议强化城市休闲与美食营销'],
+      '郑州': ['中原枢纽', '建议联动少林寺做文旅推广'],
+      '大连': ['滨海热门', '建议预热暑期滨海度假产品'],
+      '贵阳': ['避暑热门', '建议主打清凉避暑营销'],
+      '拉萨': ['高原圣地', '建议控制客流并优化预约机制'],
+      '乌鲁木齐': ['丝路门户', '建议强化丝路主题营销'],
+      '黄山': ['山岳胜地', '建议预警黄山景区承载量'],
+      '张家界': ['山岳热门', '建议强化天门山玻璃栈道产品推广'],
+      '呼和浩特': ['草原名城', '建议主打草原避暑营销'],
+      '银川': ['沙漠文旅', '建议强化沙坡头主题产品推广'],
+      '珠海': ['滨海热门', '建议预热长隆海洋度假产品'],
     };
 
     function el(id) { return document.getElementById(id); }
@@ -481,7 +536,7 @@
       const thisMonday = new Date(d); thisMonday.setDate(d.getDate() - dow);
       const lastMonday = new Date(thisMonday); lastMonday.setDate(thisMonday.getDate() - 7);
       const lastSunday = new Date(lastMonday); lastSunday.setDate(lastMonday.getDate() + 6);
-      const fmt = x => `${x.getFullYear()}年${String(x.getMonth() + 1).padStart(2, '0')}月${String(x.getDate()).padStart(2, '0')}日`;
+      const fmt = x => `${x.getFullYear()}.${String(x.getMonth() + 1).padStart(2, '0')}.${String(x.getDate()).padStart(2, '0')}`;
       return `${fmt(lastMonday)} - ${fmt(lastSunday)}（上周）`;
     }
     async function loadOverview() {
@@ -489,11 +544,17 @@
         const j = await loadJSON('/api/overview');
         if (j.code !== 0) throw new Error(j.msg);
         state.top10 = j.data.top10 || [];
-        el('update-time').textContent = formatWeekRange(j.data.update_time);
+        const weekLabel = formatWeekRange(j.data.update_time);
+        el('update-time').textContent = weekLabel;
+        el('spec-week').textContent = weekLabel;
         state.avgHeat = j.data.avg_heat;
         state.avgMom = j.data.avg_mom;
         renderTop10();
-      } catch (e) { el('chart-top10').innerHTML = '<div class="empty">数据加载失败，请确认后端已启动</div>'; }
+        renderOpsDynamics();
+      } catch (e) {
+        el('chart-top10').innerHTML = '<div class="empty">数据加载失败，请确认后端已启动</div>';
+        el('ops-dynamics').innerHTML = '<div class="empty">数据加载失败，请确认后端已启动</div>';
+      }
     }
     async function loadDailyOverview() {
       const body = el('overview-body');
@@ -639,6 +700,27 @@
       });
     }
 
+    // 重点城市运营动态：取热度 Top5，每行左侧城市名+热度+特征标签，右侧运营动作建议
+    function renderOpsDynamics() {
+      const box = el('ops-dynamics'); if (!box) return;
+      const top5 = (state.top10 || []).slice(0, 5);
+      if (!top5.length) { box.innerHTML = '<div class="empty">暂无城市热度数据，请先执行数据采集</div>'; return; }
+      box.innerHTML = top5.map(r => {
+        const city = r.city || r.name || '—';
+        const heat = Number(r.heat_index);
+        const [tag, action] = CITY_OPS[city] || ['热门城市', '建议加大营销投放并关注承载预警'];
+        const heatTxt = isFinite(heat) ? heat.toFixed(1) : '—';
+        return `<div class="ops-row">
+          <div class="ops-left">
+            <span class="ops-city">${escapeHtml(city)}</span>
+            <span class="ops-heat">热度 ${heatTxt}</span>
+            <span class="ops-tag">${tag}</span>
+          </div>
+          <div class="ops-action">${action}</div>
+        </div>`;
+      }).join('');
+    }
+
     // ===== 城市详情弹窗 =====
     async function openCityModal(city) {
       el('m-title').textContent = city;
@@ -677,29 +759,6 @@
       return `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
     }
 
-    // ===== 推荐 =====
-    async function askRecommend() {
-      const btn = el('btn-recommend');
-      const result = el('recommend-result');
-      btn.disabled = true;
-      result.textContent = 'AI 正在为你挑选目的地…';
-      try {
-        const res = await fetch('/api/ai/recommend', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            origin: el('f-origin').value.trim(),
-            days: Number(el('f-days').value),
-            budget: el('f-budget').value,
-            preference: el('f-pref').value.trim(),
-          }),
-        });
-        const j = await res.json();
-        result.innerHTML = j.code === 0 ? renderMarkdown(j.data.content) : escapeHtml(j.msg || '推荐失败');
-      } catch (e) {
-        result.textContent = '推荐失败，请确认后端已启动并配置 DEEPSEEK_API_KEY。';
-      } finally { btn.disabled = false; }
-    }
-
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
     // 渲染 AI 返回的轻量 Markdown：**加粗** → <strong>，换行 → <br>，先转义再替换保证安全
     function renderMarkdown(s) {
@@ -719,7 +778,6 @@
     }
 
     // ===== 事件与启动 =====
-    el('btn-recommend').addEventListener('click', askRecommend);
     el('modal-close').addEventListener('click', () => el('modal-mask').classList.remove('show'));
     el('modal-mask').addEventListener('click', e => { if (e.target === el('modal-mask')) el('modal-mask').classList.remove('show'); });
     window.addEventListener('resize', () => Object.values(charts).forEach(c => c && c.resize()));

@@ -20,7 +20,6 @@ from fastapi.staticfiles import StaticFiles
 from app.ai_service import (
     generate_city_analysis,
     generate_daily_overview,
-    generate_travel_recommend,
     get_scenic_spots,
 )
 from app.database import (
@@ -32,7 +31,6 @@ from app.database import (
     init_db,
 )
 from app.data_collector import run_daily_collect
-from app.schemas import RecommendRequest
 
 logging.basicConfig(
     level=logging.INFO,
@@ -220,23 +218,6 @@ async def ai_city(city_name: str) -> dict:
         {"latest": detail, "trend": trend, "scenic": get_scenic_spots(city_name)},
     )
     return ok({"city": city_name, "content": content})
-
-
-@app.post("/api/ai/recommend")
-async def ai_recommend(req: RecommendRequest) -> dict:
-    """AI 目的地推荐。"""
-    latest = get_latest_date()
-    if not latest:
-        return fail("暂无数据")
-    rows = get_heat_by_date(latest, top_n=30)
-    user_pref = {
-        "origin": req.origin,
-        "days": req.days,
-        "budget": req.budget,
-        "preference": req.preference,
-    }
-    content = generate_travel_recommend(user_pref, rows)
-    return ok({"content": content})
 
 
 if __name__ == "__main__":

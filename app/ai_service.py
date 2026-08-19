@@ -1,9 +1,8 @@
 """AI 大模型服务
 
-封装 DeepSeek 大模型 API 调用（OpenAI 兼容格式），提供三个核心功能：
-- generate_daily_overview：上周全国旅游热度综述（结构化4段）
+封装 DeepSeek 大模型 API 调用（OpenAI 兼容格式），提供两个核心功能：
+- generate_daily_overview：上周全国旅游热度运营分析（结构化4段）
 - generate_city_analysis：单城市热度解读 + 出行小贴士（约100字）
-- generate_travel_recommend：目的地推荐（2-3个 + 简短理由）
 
 所有接口在调用失败或未配置密钥时返回友好的本地兜底文案，保证程序不崩溃。
 """
@@ -122,10 +121,11 @@ def _ask(user_prompt: str, max_tokens: int) -> Optional[str]:
 # 核心功能一：每日综述
 # ---------------------------------------------------------------------------
 def generate_daily_overview(hotspot_data: dict) -> str:
-    """生成上周全国旅游热度综述（结构化4段，客观专业）。
+    """生成上周全国旅游热度运营分析（结构化4段，面向运营决策）。
 
     输出格式：4个段落，每段以加粗小标题 **【整体概览】** / **【梯队格局】** /
-    **【区域特征】** / **【趋势提示】** 开头，前端按 Markdown 渲染为加粗标题。
+    **【区域特征】** / **【运营建议】** 开头，前端按 Markdown 渲染为加粗标题。
+    【运营建议】分「营销投放 / 供给调度 / 用户运营」三个场景给出具体动作指引。
     单周无历史数据时（has_history=False）：不提供环比数值、禁止编造「0.0%」，
     并在【整体概览】末尾补充「当前为单周基准数据…」的严谨说明。
     hotspot_data 结构：{"date": str, "avg_mom": float, "top10": [城市热度字典], "has_history": bool}
@@ -158,16 +158,19 @@ def generate_daily_overview(hotspot_data: dict) -> str:
         )
 
     user_prompt = (
-        f"请基于以下数据撰写上周全国旅游热度综述，严格分为4个段落，"
+        f"请基于以下数据撰写上周全国旅游热度运营分析，严格分为4个段落，"
         f"每段开头使用加粗小标题（格式：**小标题**），正文2-3句：\n"
         f"TOP10城市热度：{city_line}。\n"
         f"{mom_line}\n"
         f"{rising_line}\n"
-        f"段落内容要求：\n"
-        f"1. **【整体概览】**：上周全国旅游热度整体水平与走势基调；{overview_extra}\n"
-        f"2. **【梯队格局】**：头部城市排名情况与梯队分层特征；\n"
-        f"3. **【区域特征】**：区域分布差异与城市群表现特点；\n"
-        f"4. **【趋势提示】**：后续热度预判与出行参考建议。\n"
+        f"段落内容要求（面向文旅运营决策，从数据描述转向业务分析）：\n"
+        f"1. **【整体概览】**：上周全国旅游热度整体水位与走势基调，并给出业务定性（如高位运行、温和增长、结构性分化）；{overview_extra}\n"
+        f"2. **【梯队格局】**：头部城市排名情况与梯队分层特征，补充1句业务归因（如头部城市受暑期亲子游、文博游需求驱动）；\n"
+        f"3. **【区域特征】**：区域分布差异与城市群表现，补充城市群运营价值判断（如长三角城市群协同运营价值高）；\n"
+        f"4. **【运营建议】**：分三个场景给出具体动作指引——\n"
+        f"   · 营销投放：建议重点投入的城市与理由；\n"
+        f"   · 供给调度：高热度城市的承载预警与优化方向；\n"
+        f"   · 用户运营：错峰引导建议与体验平衡策略。\n"
         f"硬性要求：{hard_rule}"
     )
 
@@ -175,7 +178,7 @@ def generate_daily_overview(hotspot_data: dict) -> str:
     if text:
         return text
 
-    # 本地兜底文案（同样结构化4段，与前端 Markdown 渲染兼容）
+    # 本地兜底文案（同样结构化4段、带运营建议，与前端 Markdown 渲染兼容）
     top3 = "、".join(c.get("city", "") for c in top10[:3])
     if has_history:
         trend_word = "整体上升" if float(avg_mom) > 0 else "整体回落"
@@ -187,9 +190,9 @@ def generate_daily_overview(hotspot_data: dict) -> str:
         )
     return (
         f"**【整体概览】** {overview_line}\n"
-        f"**【梯队格局】** 综合热度最高的是{top10[0].get('city', '')}，其余城市热度呈梯队分布。\n"
-        f"**【区域特征】** 热门城市覆盖多个区域，重点旅游城市群表现活跃。\n"
-        f"**【趋势提示】** 建议关注热度上升城市，出行前提前预订、错峰安排。"
+        f"**【梯队格局】** 综合热度最高的是{top10[0].get('city', '')}，其余城市热度呈梯队分布，头部城市受暑期亲子游、文博游等需求驱动。\n"
+        f"**【区域特征】** 热门城市覆盖多个区域，重点旅游城市群表现活跃，城市群协同运营价值较高。\n"
+        f"**【运营建议】** **营销投放**：建议重点投入热度上升城市，加大内容种草；**供给调度**：对高热度城市提前预警景区承载量，优化住宿交通供给；**用户运营**：引导游客错峰出行，平衡高峰体验与接待能力。"
     )
 
 
@@ -231,46 +234,3 @@ def generate_city_analysis(city_name: str, city_data: dict) -> str:
     trend_word = "热度呈上升趋势" if float(mom) > 0 else "热度较为平稳或有所回落"
     tip = f"建议提前预订、错峰游览{'、'.join(scenic)}" if scenic else "建议错峰出行"
     return f"{city_name}当前综合热度{(heat_now):.0f}，{trend_word}。{tip}。"
-
-
-# ---------------------------------------------------------------------------
-# 核心功能三：目的地推荐
-# ---------------------------------------------------------------------------
-def generate_travel_recommend(user_pref: dict, all_data: List[dict]) -> str:
-    """生成2-3个目的地推荐 + 简短理由（≤150字）。
-
-    user_pref 结构：{"origin": 出发地, "days": 天数, "budget": 预算, "preference": 喜好}
-    all_data：当前全部城市热度数据列表。
-    """
-    origin = user_pref.get("origin") or "你所在城市"
-    days = user_pref.get("days") or 3
-    budget = user_pref.get("budget") or "不限"
-    preference = user_pref.get("preference") or "不限"
-
-    hot_cities = (all_data or [])[:10]
-    city_line = "、".join(
-        f"{c.get('city', '')}(热度{(c.get('heat_index') or 0):.0f})" for c in hot_cities
-    )
-
-    user_prompt = (
-        f"请根据以下信息推荐2-3个旅游目的地：\n"
-        f"用户条件：出发地{origin}，游玩{days}天，预算{budget}，偏好{preference}。\n"
-        f"当前热门城市热度：{city_line}。\n"
-        f"要求：逻辑清晰、结构规整，每个目的地附一句结合热度数据的推荐理由，"
-        f"总字数150字以内。"
-    )
-
-    text = _ask(user_prompt, max_tokens=350)
-    if text:
-        return text
-
-    # 本地兜底文案
-    if not hot_cities:
-        return "暂无可推荐的热度数据，请稍后再试。"
-    parts = []
-    for i, c in enumerate(hot_cities[:3], 1):
-        city = c.get("city", "")
-        spots = get_scenic_spots(city)
-        spot_line = f"（代表性景区：{'、'.join(spots)}）" if spots else ""
-        parts.append(f"{i}. {city}：综合热度{(c.get('heat_index') or 0):.0f}{spot_line}")
-    return "综合当前热度数据，推荐以下目的地：\n" + "\n".join(parts)
