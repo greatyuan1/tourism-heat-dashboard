@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>全国旅游热度 AI 洞察看板</title>
+  <title>全国旅游热度运营看板</title>
   <style>
     :root {
       --bg: #07111f;
@@ -35,9 +35,11 @@
 
     /* ===== 顶栏 ===== */
     .header { display: flex; align-items: center; gap: 14px; padding: 8px 4px 18px; }
-    .header .logo { font-size: 24px; font-weight: 800; letter-spacing: 1px;
+    .header .title-block { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .header .logo { font-size: 18px; font-weight: 800; letter-spacing: 0.5px;
       background: linear-gradient(90deg, #38bdf8, #22d3ee, #34d399);
       -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .header .tagline { margin: 0; font-size: 13px; line-height: 1.7; color: var(--text-dim); }
     .header .spacer { flex: 1; }
     .update-time { color: var(--text-dim); font-size: 13px; }
     .update-time b { color: var(--accent); font-weight: 700; }
@@ -74,7 +76,7 @@
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
     /* ===== 顶部数据口径说明 ===== */
-    .spec-card { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 16px; }
+    .spec-card { display: grid; grid-template-columns: repeat(2, 1fr); margin-bottom: 16px; }
     .spec-side { display: flex; flex-direction: column; justify-content: flex-start; }
     .spec-side + .spec-side { border-left: 1px solid var(--panel-border); padding-left: 32px; }
     .spec-side h3 {
@@ -84,7 +86,6 @@
     .spec-side h3::before { content: ""; width: 4px; height: 14px; border-radius: 2px;
       background: linear-gradient(var(--accent), var(--accent-2)); }
     .spec-items { display: flex; flex-wrap: wrap; gap: 22px; }
-    .spec-desc { margin: 0; font-size: 13px; line-height: 1.9; color: #d7e8fb; }
     .spec-item .k { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
     .spec-item .v { font-size: 14px; color: var(--text); font-weight: 600; line-height: 1.5; }
     .spec-formula { margin: 0; font-size: 15px; line-height: 1.9; color: var(--text); }
@@ -98,9 +99,9 @@
     .main { display: grid; grid-template-columns: 70fr 30fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
     .left-col { display: flex; flex-direction: column; gap: 16px; }
     .right-col { display: flex; flex-direction: column; gap: 16px; }
-    .chart { width: 100%; height: 420px; }
-    .map-panel { display: flex; flex-direction: column; flex: 1; min-height: 420px; }
-    .map-chart { flex: 1; min-height: 380px; width: 100%; }
+    .chart { width: 100%; height: 500px; }
+    .map-panel { display: flex; flex-direction: column; flex: 1; min-height: 500px; }
+    .map-chart { flex: 1; min-height: 460px; width: 100%; }
 
     /* ===== 数据说明按钮 ===== */
     .ghost-btn {
@@ -188,17 +189,16 @@
   <div class="wrap">
     <!-- 顶部标题栏 -->
     <header class="header">
-      <div class="logo">全国旅游热度 AI 洞察看板</div>
+      <div class="title-block">
+        <div class="logo">全国旅游热度运营看板</div>
+        <p class="tagline">面向旅游行业运营者的周度热度监测工具，辅助营销投放、目的地运营与供给调度决策</p>
+      </div>
       <div class="spacer"></div>
       <div class="update-time">数据周期：<b id="update-time">—</b></div>
     </header>
 
     <!-- 顶部数据口径说明（通栏） -->
     <section class="panel spec-card">
-      <div class="spec-side">
-        <h3>看板定位</h3>
-        <p class="spec-desc">面向旅游行业运营者的周度热度监测工具，辅助营销投放、目的地运营与供给调度决策</p>
-      </div>
       <div class="spec-side">
         <h3>核心口径速览</h3>
         <div class="spec-items">
@@ -776,8 +776,10 @@
       const lines = escapeHtml(s).split('\n');
       return lines.map(line => {
         const bolded = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        if (/^<strong>(营销投放|供给调度|用户运营)<\/strong>/.test(bolded)) {
-          return '<div class="ops-scenario">' + bolded + '</div>';
+        // 剥离三场景行开头的序号/圆点符号（如 ·、•、-、*、1. 等），避免大模型输出带出奇怪前缀
+        const stripped = bolded.replace(/^(?:[\s·•▪◦●○◆]+|[-*]\s*|\d+[.、)]\s*)/, '');
+        if (/^<strong>(营销投放|供给调度|用户运营)<\/strong>/.test(stripped)) {
+          return '<div class="ops-scenario">' + stripped + '</div>';
         }
         return bolded;
       }).join('<br>');
