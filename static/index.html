@@ -63,7 +63,7 @@
     .overview-text .tag { color: var(--accent); font-weight: 600; }
     .overview-text strong { color: var(--accent); font-weight: 700; }
     .overview-text .hl-heat { color: #22d3ee; font-weight: 600; }
-    .overview-text .hl-city { color: #e6f1ff; font-weight: 700; }
+    .overview-text .hl-city { color: #fbbf24; font-weight: 700; }
     .overview-text .hl-num { color: #60a5fa; }
     .overview-text .ops-scenario { margin: 4px 0; padding-left: 12px; border-left: 3px solid var(--accent); }
     .skeleton { border-radius: 6px; height: 18px;
@@ -75,7 +75,7 @@
 
     /* ===== 顶部数据口径说明 ===== */
     .spec-card { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 16px; }
-    .spec-side { display: flex; flex-direction: column; justify-content: center; }
+    .spec-side { display: flex; flex-direction: column; justify-content: flex-start; }
     .spec-side + .spec-side { border-left: 1px solid var(--panel-border); padding-left: 32px; }
     .spec-side h3 {
       font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 14px;
@@ -98,9 +98,9 @@
     .main { display: grid; grid-template-columns: 70fr 30fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
     .left-col { display: flex; flex-direction: column; gap: 16px; }
     .right-col { display: flex; flex-direction: column; gap: 16px; }
-    .chart { width: 100%; height: 320px; }
-    .map-panel { display: flex; flex-direction: column; flex: 1; min-height: 300px; }
-    .map-chart { flex: 1; min-height: 260px; width: 100%; }
+    .chart { width: 100%; height: 420px; }
+    .map-panel { display: flex; flex-direction: column; flex: 1; min-height: 420px; }
+    .map-chart { flex: 1; min-height: 380px; width: 100%; }
 
     /* ===== 数据说明按钮 ===== */
     .ghost-btn {
@@ -273,8 +273,8 @@
           <div class="chart" id="chart-top10"></div>
         </div>
         <div class="panel">
-          <h2>热度偏离度榜单
-            <span class="surge-sub">基于单周数据测算</span>
+          <h2>城市热度对比榜
+            <span class="surge-sub">相对全国均值</span>
           </h2>
           <div class="chart" id="chart-surge"><div class="empty">加载中…</div></div>
           <div class="surge-note">累计两周数据后自动升级为真实周环比涨幅榜</div>
@@ -438,12 +438,12 @@
         cityChart.hideLoading();
         renderProvinceMap();
         renderCityMap();
-        renderSurge(); // 偏离度榜复用同一份城市热度数据
+        renderSurge(); // 城市热度对比榜复用同一份城市热度数据
       } catch (e) {
         const msg = '地图加载失败：' + (e && e.message ? e.message : e);
         showMapError(provinceChart, msg);
         showMapError(cityChart, msg);
-        renderSurge(); // 地图数据失败时，偏离度榜同步显示空态
+        renderSurge(); // 地图数据失败时，城市热度对比榜同步显示空态
       }
     }
 
@@ -563,7 +563,7 @@
       }
     }
 
-    // ===== 图表渲染（TOP10 / 偏离度榜） =====
+    // ===== 图表渲染（TOP10 / 城市热度对比榜） =====
     // 热力色阶分层：与地图 visualMap 的蓝→青→绿→黄→红色阶一致（0-100 满分区间）
     function heatTier(v) {
       v = Number(v) || 0;
@@ -639,7 +639,7 @@
       });
     }
 
-    // 偏离度榜单数据：优先 weekly_growth 真实周涨幅字段，否则按热度偏离全国均值幅度临时替代
+    // 城市热度对比榜数据：优先 weekly_growth 真实周涨幅字段，否则按相对全国均值的幅度临时替代
     function computeSurgeData() {
       const rows = (heatRows || []).filter(r => r && (r.city || r.name));
       if (!rows.length) return [];
@@ -666,7 +666,7 @@
       const data = [...list].reverse(); // ECharts 分类轴自下而上，反转后第1名在顶部
       c.setOption({
         grid: { left: 6, right: 96, top: 6, bottom: 4, containLabel: true },
-        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: v => '偏离度 ' + (v >= 0 ? '+' : '') + Number(v).toFixed(1) + '%' },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: v => '相对全国均值 ' + (v >= 0 ? '+' : '') + Number(v).toFixed(1) + '%' },
         xAxis: { type: 'value', splitLine: { lineStyle: { color: '#16324f' } }, axisLabel: { color: textColor(), formatter: '{value}%' } },
         yAxis: {
           type: 'category', data: data.map(d => d.city),
@@ -689,10 +689,9 @@
             formatter: p => {
               const sign = p.value >= 0 ? '+' : '';
               const style = p.value >= 0 ? 'valUp' : 'valDown';
-              return `{tag|偏离度 }{${style}|${sign}${Number(p.value).toFixed(1)}%}`;
+              return `{${style}|${sign}${Number(p.value).toFixed(1)}%}`;
             },
             rich: {
-              tag: { color: '#8aa8c8', fontSize: 10, fontWeight: 400 },
               valUp: { color: '#f59e0b', fontSize: 11, fontWeight: 600 },
               valDown: { color: '#38bdf8', fontSize: 11, fontWeight: 600 },
             },
