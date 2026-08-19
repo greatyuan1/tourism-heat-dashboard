@@ -77,7 +77,7 @@
     .spec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; align-items: stretch; }
     .spec-block { display: flex; flex-direction: column; }
     .spec-block h3 {
-      font-size: 12px; font-weight: 700; color: var(--text); margin: 0 0 14px;
+      font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 14px;
       display: flex; align-items: center; gap: 8px;
     }
     .spec-block h3::before { content: ""; width: 4px; height: 14px; border-radius: 2px;
@@ -589,7 +589,7 @@
         if (j.code !== 0) throw new Error(j.msg);
         const analysis = j.data.analysis || '';
         const adviceText = j.data.advice || '';
-        body.innerHTML = '<div class="overview-text">' + highlightOverview(renderMarkdown(analysis)) + '</div>';
+        body.innerHTML = '<div class="overview-text">' + highlightOverview(renderMarkdown(analysis.replace(/\n\s*\n/g, '\n'))) + '</div>';
         advice.innerHTML = adviceText
           ? '<div class="overview-text">' + highlightOverview(renderMarkdown(adviceText.replace(/\n\s*\n/g, '\n'))) + '</div>'
           : '<div class="empty">暂无运营建议</div>';

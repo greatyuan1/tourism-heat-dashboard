@@ -201,7 +201,11 @@ def _generate_analysis(city_line: str, mom_line: str, rising_line: str, overview
         f"3. **【区域特征】**：区域分布差异与城市群表现，补充城市群运营价值判断（如长三角城市群协同运营价值高）。\n"
         f"硬性要求：{hard_rule}；语言精炼简洁，每段控制在1-2句话，全篇不超过180字。"
     )
-    return _ask(user_prompt, max_tokens=350) or ""
+    text = _ask(user_prompt, max_tokens=350)
+    if not text:
+        return ""
+    # 三段之间去掉空行，保持紧凑
+    return "\n".join(ln.strip() for ln in text.split("\n") if ln.strip())
 
 
 def _generate_advice(city_line: str, mom_line: str, rising_line: str) -> str:
