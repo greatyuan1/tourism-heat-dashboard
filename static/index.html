@@ -599,13 +599,13 @@
     }
     // 将综述正文按「运营建议」小节拆成两段：市场分析 + 运营建议
     function splitOverview(raw) {
-      const marker = '【运营建议】';
-      const idx = raw.indexOf(marker);
-      if (idx < 0) return { analysis: raw, advice: '' };
-      const analysis = raw.slice(0, idx).replace(/\*+\s*$/, '').trim();
-      const advice = raw.slice(idx)
-        .replace(/^【运营建议】\**/, '')   // 去掉「【运营建议】」标题与紧随的加粗星号
-        .replace(/^\s*\n\s*/, '')          // 再去掉标题行后的换行
+      // 「运营建议」小节标题兼容多种格式：**【运营建议】** / **运营建议** / 【运营建议】
+      const m = raw.match(/\*{0,2}【?运营建议】?\*{0,2}/);
+      if (!m) return { analysis: raw, advice: '' };
+      const analysis = raw.slice(0, m.index).replace(/\*+\s*$/, '').trim();
+      const advice = raw.slice(m.index + m[0].length)
+        .replace(/^[:：]?/, '')   // 去掉标题后可能残留的冒号
+        .replace(/^\s*\n\s*/, '') // 再去掉标题行后的换行
         .trim();
       return { analysis, advice };
     }
