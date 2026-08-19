@@ -126,10 +126,13 @@ def generate_daily_overview(hotspot_data: dict) -> str:
 
     输出格式：4个段落，每段以加粗小标题 **【整体概览】** / **【梯队格局】** /
     **【区域特征】** / **【趋势提示】** 开头，前端按 Markdown 渲染为加粗标题。
-    hotspot_data 结构：{"date": str, "avg_mom": float, "top10": [城市热度字典]}
+    单周无历史数据时（has_history=False）：不提供环比数值、禁止编造「0.0%」，
+    并在【整体概览】末尾补充「当前为单周基准数据…」的严谨说明。
+    hotspot_data 结构：{"date": str, "avg_mom": float, "top10": [城市热度字典], "has_history": bool}
     """
     top10 = hotspot_data.get("top10") or []
     avg_mom = hotspot_data.get("avg_mom") or 0
+    has_history = bool(hotspot_data.get("has_history", True))
 
     if not top10:
         return "上周暂无热度数据，先去采集一波吧～"
@@ -139,18 +142,33 @@ def generate_daily_overview(hotspot_data: dict) -> str:
     )
     rising = [c.get("city", "") for c in top10 if (c.get("mom_change") or 0) > 0][:3]
 
+    # 环比相关数据行：无历史数据时不提供环比数值，避免大模型把「无法计算」误写成「0.0%」
+    if has_history:
+        mom_line = f"全国整体热度环比：{float(avg_mom):+.1f}%。"
+        rising_line = f"热度环比上升的城市：{'、'.join(rising) if rising else '无'}。"
+        overview_extra = ""
+        hard_rule = "客观专业、条理清晰、直接给结论，避免口语化与网络化表达。"
+    else:
+        mom_line = "全国整体热度环比：暂无历史基准数据（当前仅单周，尚无法计算环比）。"
+        rising_line = "热度环比上升的城市：暂无（需累计两周数据后方可计算）。"
+        overview_extra = "该段末尾必须补一句严谨说明：当前为单周基准数据，周环比变化指标将在累计两周数据后自动更新。"
+        hard_rule = (
+            "当数据标注为「暂无历史基准数据」时，严禁输出「环比0.0%」「环比持平」「环比无变化」等错误表述，"
+            "也不得自行编造任何环比百分比；其余保持客观专业、条理清晰、直接给结论，避免口语化与网络化表达。"
+        )
+
     user_prompt = (
         f"请基于以下数据撰写上周全国旅游热度综述，严格分为4个段落，"
         f"每段开头使用加粗小标题（格式：**小标题**），正文2-3句：\n"
         f"TOP10城市热度：{city_line}。\n"
-        f"全国整体热度环比：{float(avg_mom):+.1f}%。\n"
-        f"热度环比上升的城市：{'、'.join(rising)}。\n"
+        f"{mom_line}\n"
+        f"{rising_line}\n"
         f"段落内容要求：\n"
-        f"1. **【整体概览】**：上周全国旅游热度整体水平与走势基调；\n"
+        f"1. **【整体概览】**：上周全国旅游热度整体水平与走势基调；{overview_extra}\n"
         f"2. **【梯队格局】**：头部城市排名情况与梯队分层特征；\n"
         f"3. **【区域特征】**：区域分布差异与城市群表现特点；\n"
         f"4. **【趋势提示】**：后续热度预判与出行参考建议。\n"
-        f"要求：客观专业、条理清晰、直接给结论，避免口语化与网络化表达。"
+        f"硬性要求：{hard_rule}"
     )
 
     text = _ask(user_prompt, max_tokens=400)
@@ -159,9 +177,16 @@ def generate_daily_overview(hotspot_data: dict) -> str:
 
     # 本地兜底文案（同样结构化4段，与前端 Markdown 渲染兼容）
     top3 = "、".join(c.get("city", "") for c in top10[:3])
-    trend_word = "热度整体上升" if float(avg_mom) > 0 else "热度整体回落"
+    if has_history:
+        trend_word = "整体上升" if float(avg_mom) > 0 else "整体回落"
+        overview_line = f"上周全国旅游热度{trend_word}，热度主要集中在{top3}等热门旅游城市。"
+    else:
+        overview_line = (
+            f"上周全国旅游热度主要集中在{top3}等热门旅游城市。"
+            "当前为单周基准数据，周环比变化指标将在累计两周数据后自动更新。"
+        )
     return (
-        f"**【整体概览】** 上周全国旅游热度{trend_word}，热度主要集中在{top3}等热门旅游城市。\n"
+        f"**【整体概览】** {overview_line}\n"
         f"**【梯队格局】** 综合热度最高的是{top10[0].get('city', '')}，其余城市热度呈梯队分布。\n"
         f"**【区域特征】** 热门城市覆盖多个区域，重点旅游城市群表现活跃。\n"
         f"**【趋势提示】** 建议关注热度上升城市，出行前提前预订、错峰安排。"

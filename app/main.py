@@ -196,7 +196,14 @@ async def ai_daily_overview() -> dict:
 
     rows = get_heat_by_date(latest, top_n=10)
     avg_mom = round(sum(r["mom_change"] or 0 for r in rows) / len(rows), 2) if rows else 0
-    content = generate_daily_overview({"date": latest, "avg_mom": avg_mom, "top10": rows})
+    # 是否存在历史环比基准：累计至少 2 个采集日期才具备周环比计算条件
+    has_history = len(get_daily_avg_trend(2)) >= 2
+    content = generate_daily_overview({
+        "date": latest,
+        "avg_mom": avg_mom,
+        "top10": rows,
+        "has_history": has_history,
+    })
     _ai_daily_cache[latest] = content
     return ok({"content": content, "cached": False})
 

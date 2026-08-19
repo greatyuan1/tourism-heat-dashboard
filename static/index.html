@@ -62,6 +62,8 @@
     .overview-text { font-size: 15px; line-height: 1.9; color: #d7e8fb; white-space: pre-wrap; }
     .overview-text .tag { color: var(--accent); font-weight: 600; }
     .overview-text strong { color: var(--accent); font-weight: 700; }
+    .overview-text .hl-city { color: #22d3ee; }
+    .overview-text .hl-num { color: #60a5fa; }
     .skeleton { border-radius: 6px; height: 18px;
       background: linear-gradient(90deg, #12263f 25%, #1c3a5f 50%, #12263f 75%);
       background-size: 200% 100%; animation: shimmer 1.4s infinite; }
@@ -269,7 +271,7 @@
   <script>
     // ===== 全局状态 =====
     const GEO_URL = '/static/china.json';  // 本地城市级 GeoJSON（已合并直辖市+地级市）
-    const PROVINCE_GEO_URL = 'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json'; // DataV 省级 GeoJSON
+    const PROVINCE_GEO_URL = '/static/province.json'; // 本地省级 GeoJSON（与城市级 china.json 同源，避免混合内容拦截）
     const state = { top10: [] };
     const charts = {};
 
@@ -498,7 +500,7 @@
       try {
         const j = await loadJSON('/api/ai/daily-overview');
         if (j.code !== 0) throw new Error(j.msg);
-        body.innerHTML = '<div class="overview-text">' + renderMarkdown(j.data.content) + '</div>';
+        body.innerHTML = '<div class="overview-text">' + highlightOverview(renderMarkdown(j.data.content)) + '</div>';
       } catch (e) {
         body.innerHTML = '<div class="overview-text">AI 综述加载失败，请确认后端已启动并配置 DEEPSEEK_API_KEY。</div>';
       }
@@ -529,7 +531,7 @@
         if (rc < 0) return { text: ` ${rc}`, style: 'rcDown' };  // 下降：冷色（负号自带）
         return { text: ' -', style: 'rcFlat' };                   // 不变：中性
       }
-      return { text: ' -', style: 'rcFlat' };                     // 无历史数据：占位
+      return { text: '', style: 'rcFlat' };                       // 无历史数据：不显示占位符，仅保留箭头
     }
     function renderTop10() {
       if (!state.top10.length) return;
@@ -704,6 +706,16 @@
       return escapeHtml(s)
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\n/g, '<br>');
+    }
+    // AI 综述重点高亮：城市名 → 主题青 #22d3ee，热度数值/核心结论词 → 浅蓝 #60a5fa
+    function highlightOverview(html) {
+      const cities = Object.keys(CITY_TO_PROVINCE).join('|');
+      const words = ['第一梯队', '第二梯队', '第三梯队', '高位稳定', '结构分化', '集聚效应'].join('|');
+      const numRe = /(\d+\.\d+%?|(?:综合热度|平均热度|热度值|热度指数|热度)\s*\d+(?:\.\d+)?%?)/g;
+      return html
+        .replace(new RegExp('(' + words + ')', 'g'), '<span class="hl-num">$1</span>')
+        .replace(numRe, '<span class="hl-num">$1</span>')
+        .replace(new RegExp('(' + cities + ')', 'g'), '<span class="hl-city">$1</span>');
     }
 
     // ===== 事件与启动 =====
