@@ -139,6 +139,21 @@
     .audience-list li { position: relative; padding-left: 14px; }
     .audience-list li::before { content: ""; position: absolute; left: 0; top: 12px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.6; box-shadow: 0 0 6px rgba(34, 211, 238, 0.5); }
 
+    /* ===== 细分维度热度榜 ===== */
+    .sub-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; align-items: stretch; }
+    .sub-card { display: flex; flex-direction: column; }
+    .sub-list { display: flex; flex-direction: column; gap: 12px; }
+    .sub-row { display: flex; align-items: center; gap: 10px; }
+    .sub-rank {
+      width: 22px; height: 22px; flex: none; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: #062033;
+      background: linear-gradient(135deg, #38bdf8, #22d3ee);
+      box-shadow: 0 0 12px rgba(34, 211, 238, 0.45);
+    }
+    .sub-city { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sub-val { flex: none; font-size: 14px; font-weight: 800; color: var(--accent); }
+
     /* ===== 主体分栏 ===== */
     .main { display: grid; grid-template-columns: 70fr 30fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
     .left-col { display: flex; flex-direction: column; gap: 16px; }
@@ -230,6 +245,7 @@
       .map-chart { min-height: 300px; }
       .header { flex-wrap: wrap; }
       .spec-grid { grid-template-columns: 1fr; }
+      .sub-grid { grid-template-columns: 1fr; }
       .ops-row { grid-template-columns: 1fr; gap: 8px; }
       .ops-head { display: none; }
       .ops-left { flex-wrap: wrap; }
@@ -307,6 +323,22 @@
           <div class="skeleton"></div>
           <div class="skeleton short"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- 细分维度热度榜 -->
+    <section class="sub-grid">
+      <div class="panel sub-card">
+        <h2>搜索热度TOP5</h2>
+        <div class="sub-list" id="sub-search"></div>
+      </div>
+      <div class="panel sub-card">
+        <h2>迁徙热度TOP5</h2>
+        <div class="sub-list" id="sub-migration"></div>
+      </div>
+      <div class="panel sub-card">
+        <h2>景区热度TOP5</h2>
+        <div class="sub-list" id="sub-scenic"></div>
       </div>
     </section>
 
@@ -495,11 +527,13 @@
         renderProvinceMap();
         renderCityMap();
         renderSurge(); // 城市热度对比榜复用同一份城市热度数据
+        renderSubDimensions(); // 细分维度热度榜复用同一份城市热度数据
       } catch (e) {
         const msg = '地图加载失败：' + (e && e.message ? e.message : e);
         showMapError(provinceChart, msg);
         showMapError(cityChart, msg);
         renderSurge(); // 地图数据失败时，城市热度对比榜同步显示空态
+        renderSubDimensions(); // 同步显示空态
       }
     }
 
@@ -785,6 +819,32 @@
             };
           }),
         }],
+      });
+    }
+
+    // 细分维度热度榜：从地图热度数据中拆解搜索/迁徙/景区三个分项，各取前5名
+    function renderSubDimensions() {
+      const rows = (heatRows || []).filter(r => r && (r.city || r.name));
+      const dims = [
+        { id: 'sub-search', key: 'search_heat' },
+        { id: 'sub-migration', key: 'migration_heat' },
+        { id: 'sub-scenic', key: 'scenic_heat' },
+      ];
+      dims.forEach(d => {
+        const box = el(d.id);
+        if (!box) return;
+        const list = rows
+          .map(r => ({ city: r.city || r.name, value: Number(r[d.key]) || 0 }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 5);
+        box.innerHTML = list.length
+          ? list.map((item, i) => `
+            <div class="sub-row">
+              <span class="sub-rank">${i + 1}</span>
+              <span class="sub-city">${escapeHtml(item.city)}</span>
+              <span class="sub-val">${item.value.toFixed(1)}</span>
+            </div>`).join('')
+          : '<div class="empty">暂无数据</div>';
       });
     }
 
