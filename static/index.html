@@ -6,37 +6,46 @@
   <title>全国旅游热度运营看板</title>
   <style>
     :root {
-      --bg: #07111f;
+      --bg: #050b16;
       --bg-glow: #0a1a33;
-      --panel: rgba(15, 28, 51, 0.82);
-      --panel-border: #1c3553;
-      --text: #e6f1ff;
+      --panel: rgba(15, 28, 51, 0.58);
+      --panel-border: rgba(56, 189, 248, 0.14);
+      --panel-border-strong: rgba(56, 189, 248, 0.34);
+      --text: #e8f1ff;
       --text-dim: #8aa8c8;
       --accent: #22d3ee;
       --accent-2: #38bdf8;
       --good: #34d399;
       --warn: #f59e0b;
       --bad: #f87171;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --radius-xs: 8px;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
       min-height: 100vh;
       color: var(--text);
-      font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-family: "Inter", "SF Pro Display", system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
       font-size: 14px;
-      line-height: 1.6;
-      background:
-        radial-gradient(1200px 600px at 15% -10%, #0f2a4a 0%, transparent 55%),
-        radial-gradient(1000px 500px at 100% 0%, #0a2440 0%, transparent 50%),
-        var(--bg);
+      line-height: 1.65;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(1200px 700px at 12% -8%, rgba(34, 211, 238, 0.13) 0%, transparent 55%),
+        radial-gradient(1100px 620px at 100% -4%, rgba(56, 189, 248, 0.11) 0%, transparent 50%),
+        radial-gradient(900px 900px at 50% 120%, rgba(16, 42, 78, 0.5) 0%, transparent 62%),
+        linear-gradient(rgba(56, 189, 248, 0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.028) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 100% 100%, 42px 42px, 42px 42px;
+      background-attachment: fixed;
     }
     .wrap { max-width: 1440px; margin: 0 auto; padding: 18px 22px 40px; }
 
     /* ===== 顶栏 ===== */
     .header { display: flex; align-items: center; gap: 14px; padding: 8px 4px 18px; }
     .header .logo { font-size: 26px; font-weight: 800; letter-spacing: 0.5px;
-      background: linear-gradient(90deg, #38bdf8, #22d3ee, #34d399);
+      background: linear-gradient(90deg, #7dd3fc, #22d3ee 45%, #34d399);
       -webkit-background-clip: text; background-clip: text; color: transparent; }
     .header .spacer { flex: 1; }
     .update-time { color: var(--text-dim); font-size: 13px; }
@@ -44,25 +53,52 @@
 
     /* ===== 卡片 ===== */
     .panel {
-      background: var(--panel);
+      position: relative;
+      background:
+        radial-gradient(120% 90% at 50% 0%, rgba(56, 189, 248, 0.07) 0%, transparent 45%),
+        linear-gradient(180deg, rgba(22, 40, 70, 0.64), rgba(11, 22, 42, 0.72));
       border: 1px solid var(--panel-border);
-      border-radius: 14px;
+      border-radius: var(--radius);
       padding: 16px 18px;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 24px 48px -26px rgba(0, 0, 0, 0.7);
+      transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+    .panel::before {
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.45), rgba(56, 189, 248, 0.06) 32%, rgba(56, 189, 248, 0.05) 58%, rgba(34, 211, 238, 0.28));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    .panel:hover {
+      transform: translateY(-3px);
+      border-color: var(--panel-border-strong);
+      box-shadow: 0 34px 68px -28px rgba(0, 0, 0, 0.75), 0 0 26px rgba(34, 211, 238, 0.07);
+    }
+    .panel:hover::before {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.6), rgba(56, 189, 248, 0.1) 32%, rgba(56, 189, 248, 0.08) 58%, rgba(34, 211, 238, 0.42));
     }
     .panel h2 {
-      font-size: 15px; font-weight: 700; margin: 0 0 12px;
+      font-size: 15px; font-weight: 800; margin: 0 0 12px;
       display: flex; align-items: center; gap: 8px;
+      letter-spacing: 0.3px;
     }
-    .panel h2::before { content: ""; width: 4px; height: 16px; border-radius: 2px;
-      background: linear-gradient(var(--accent), var(--accent-2)); }
+    .panel h2::before { content: ""; width: 4px; height: 18px; border-radius: 2px;
+      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+      box-shadow: 0 0 12px rgba(34, 211, 238, 0.45); }
 
     /* ===== 顶部综述区（市场分析 + 运营建议 两板块） ===== */
     .overview-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
-    .overview-text { font-size: 15px; line-height: 1.75; color: #d7e8fb; white-space: pre-wrap; }
+    .overview-text { font-size: 15px; line-height: 1.8; color: #d7e8fb; white-space: pre-wrap; }
     .overview-text .tag { color: var(--accent); font-weight: 600; }
-    .overview-text strong { color: var(--accent); font-weight: 700; }
-    .overview-text .hl-heat { color: #22d3ee; font-weight: 600; }
+    .overview-text strong { color: var(--accent); font-weight: 800; }
+    .overview-text .hl-heat { color: #22d3ee; font-weight: 700; text-shadow: 0 0 12px rgba(34, 211, 238, 0.35); }
     .overview-text .hl-city { color: #fbbf24; font-weight: 700; }
     .overview-text .hl-num { color: #60a5fa; }
     .overview-text .ops-scene { color: var(--accent); font-weight: 700; }
@@ -77,33 +113,39 @@
     .spec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; align-items: stretch; }
     .spec-block { display: flex; flex-direction: column; }
     .spec-block h3 {
-      font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 10px;
-      display: flex; align-items: center; gap: 8px;
+      font-size: 15px; font-weight: 800; color: var(--text); margin: 0 0 10px;
+      display: flex; align-items: center; gap: 8px; letter-spacing: 0.3px;
     }
-    .spec-block h3::before { content: ""; width: 4px; height: 14px; border-radius: 2px;
-      background: linear-gradient(var(--accent), var(--accent-2)); }
-    .spec-desc { margin: 0; font-size: 13px; line-height: 1.9; color: #d7e8fb; }
-    .spec-block h3.sub { margin: 12px 0 10px; }
-    .spec-items { display: flex; flex-direction: column; gap: 10px; }
+    .spec-block h3::before { content: ""; width: 4px; height: 16px; border-radius: 2px;
+      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+      box-shadow: 0 0 10px rgba(34, 211, 238, 0.4); }
+    .spec-desc { margin: 0; font-size: 13px; line-height: 1.8; color: #d7e8fb; }
+    .spec-block h3.sub { margin: 14px 0 10px; padding-top: 14px;
+      border-top: 1px dashed rgba(56, 189, 248, 0.22); }
+    .spec-items { display: flex; flex-direction: column; gap: 12px; }
     .spec-item .k { font-size: 12px; color: var(--text-dim); margin-bottom: 2px; }
-    .spec-item .v { font-size: 14px; color: var(--text); font-weight: 600; line-height: 1.5; }
+    .spec-item .v { font-size: 14px; color: var(--text); font-weight: 700; line-height: 1.5; }
     .spec-formula { margin: 0; font-size: 14px; line-height: 1.9; color: var(--text); }
-    .spec-formula .f-main { color: var(--accent); font-weight: 600; }
-    .spec-formula .f-w { color: var(--accent); font-weight: 600; }
+    .spec-formula .f-main { color: var(--accent); font-weight: 700; }
+    .spec-formula .f-w {
+      background: linear-gradient(90deg, #7dd3fc, #22d3ee);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      font-weight: 800;
+    }
     .spec-foot { margin: 10px 0 0; padding: 0; list-style: none; color: var(--text-dim); font-size: 12px; line-height: 1.8; }
     .spec-foot li { position: relative; padding-left: 12px; }
     .spec-foot li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); opacity: 0.5; }
     .audience-list { margin: 0; padding: 0; list-style: none; color: #d7e8fb; font-size: 13px; line-height: 1.75; }
     .audience-list li { position: relative; padding-left: 14px; }
-    .audience-list li::before { content: ""; position: absolute; left: 0; top: 12px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.6; }
+    .audience-list li::before { content: ""; position: absolute; left: 0; top: 12px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.6; box-shadow: 0 0 6px rgba(34, 211, 238, 0.5); }
 
     /* ===== 主体分栏 ===== */
     .main { display: grid; grid-template-columns: 70fr 30fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
     .left-col { display: flex; flex-direction: column; gap: 16px; }
     .right-col { display: flex; flex-direction: column; gap: 16px; }
     .chart { width: 100%; height: 500px; }
-    .map-panel { display: flex; flex-direction: column; flex: 1; min-height: 500px; }
-    .map-chart { flex: 1; min-height: 460px; width: 100%; }
+    .map-panel { display: flex; flex-direction: column; flex: 1; min-height: 500px; padding-bottom: 10px; }
+    .map-chart { flex: 1; min-height: 470px; width: 100%; }
 
 
     /* ===== 重点城市运营策略 ===== */
@@ -112,8 +154,15 @@
     .ops-head { display: grid; grid-template-columns: 250px 1fr 1.25fr; gap: 20px; padding: 0 16px; font-size: 12px; color: var(--text-dim); }
     .ops-row {
       display: grid; grid-template-columns: 250px 1fr 1.25fr; align-items: center; gap: 20px;
-      background: #0a1830; border: 1px solid var(--panel-border);
+      background: rgba(10, 24, 48, 0.6); border: 1px solid var(--panel-border);
       border-radius: 10px; padding: 12px 16px;
+      transition: transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
+    }
+    .ops-row:hover {
+      transform: translateX(4px);
+      border-color: var(--panel-border-strong);
+      background: rgba(16, 34, 62, 0.72);
+      box-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.6);
     }
     .ops-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .ops-rank {
@@ -121,6 +170,7 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 12px; font-weight: 800; color: #062033;
       background: linear-gradient(135deg, #38bdf8, #22d3ee);
+      box-shadow: 0 0 12px rgba(34, 211, 238, 0.45);
     }
     .ops-city { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; }
     .ops-heat { font-size: 12px; color: var(--accent); font-weight: 600; white-space: nowrap; }
@@ -134,18 +184,27 @@
     .ops-action { font-size: 13px; color: #bfe0ff; line-height: 1.6; }
 
     /* ===== 城市详情弹窗 ===== */
-    .modal-mask { position: fixed; inset: 0; background: rgba(3, 8, 18, 0.66);
+    .modal-mask { position: fixed; inset: 0; background: rgba(3, 8, 18, 0.7);
+      backdrop-filter: blur(4px);
       display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
     .modal-mask.show { display: flex; }
-    .modal { width: min(560px, 100%); background: #0e1c33; border: 1px solid #24415f;
-      border-radius: 16px; padding: 22px; max-height: 80vh; overflow-y: auto; }
+    .modal { width: min(560px, 100%);
+      background:
+        radial-gradient(120% 90% at 50% 0%, rgba(56, 189, 248, 0.1) 0%, transparent 45%),
+        linear-gradient(180deg, rgba(22, 40, 70, 0.92), rgba(11, 22, 42, 0.96));
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 16px; padding: 22px; max-height: 80vh; overflow-y: auto;
+      box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.8), 0 0 24px rgba(34, 211, 238, 0.12);
+    }
     .modal .title { font-size: 20px; font-weight: 800; margin: 0 0 4px; }
     .modal .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 14px; }
     .modal .metrics { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
-    .metric { background: #0a1830; border: 1px solid var(--panel-border);
+    .metric { background: rgba(10, 24, 48, 0.6); border: 1px solid var(--panel-border);
       border-radius: 8px; padding: 8px 14px; }
     .metric .k { font-size: 12px; color: var(--text-dim); }
-    .metric .v { font-size: 18px; font-weight: 700; color: var(--accent); }
+    .metric .v { font-size: 18px; font-weight: 800;
+      background: linear-gradient(90deg, #7dd3fc, #22d3ee);
+      -webkit-background-clip: text; background-clip: text; color: transparent; }
     .modal .ai-title { color: var(--accent); font-size: 13px; font-weight: 700; margin-bottom: 6px; }
     .modal .ai-body { color: #d7e8fb; line-height: 1.9; white-space: pre-wrap; min-height: 30px; }
     .modal .close {
@@ -157,6 +216,12 @@
     .surge-note { margin-top: 6px; text-align: center; color: var(--text-dim); font-size: 12px; }
     .surge-sub { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--text-dim); white-space: nowrap; }
     .page-footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 30px 0 22px; letter-spacing: 0.5px; }
+
+    /* ===== 滚动条 ===== */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(8, 16, 32, 0.5); }
+    ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.28); border-radius: 999px; border: 2px solid rgba(8, 16, 32, 0.5); }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.45); }
 
 
     @media (max-width: 960px) {
@@ -490,6 +555,11 @@
         backgroundColor: 'transparent',
         tooltip: {
           trigger: 'item',
+          backgroundColor: 'rgba(8, 16, 32, 0.92)',
+          borderColor: 'rgba(56, 189, 248, 0.35)',
+          borderWidth: 1,
+          textStyle: { color: '#e8f1ff', fontSize: 12 },
+          extraCssText: 'box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); border-radius: 8px;',
           formatter: p => {
             if (p.data && p.data.city) return `${p.data.city}<br/>综合热度：<b>${p.value}</b>`;
             if (p.data && p.data.province) return `${p.data.province}<br/>最高热度：<b>${p.value}</b>`;
@@ -630,8 +700,12 @@
         },
         series: [{
           type: 'bar', data: data.map(d => d.heat_index), barWidth: '58%',
-          itemStyle: { borderRadius: [0, 6, 6, 0], color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: '#2563eb' }, { offset: 1, color: '#22d3ee' }]) },
+          itemStyle: {
+            borderRadius: [0, 6, 6, 0],
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#2563eb' }, { offset: 1, color: '#22d3ee' }]),
+            shadowBlur: 10, shadowColor: 'rgba(34, 211, 238, 0.4)', shadowOffsetX: 2,
+          },
           label: { show: true, position: 'right', color: textColor(), fontSize: 11, formatter: p => p.value.toFixed(0) },
         }],
       });
@@ -695,12 +769,20 @@
             },
           },
           data: data.map(d => {
-            const color = d.growth >= 0
+            const positive = d.growth >= 0;
+            const color = positive
               ? new echarts.graphic.LinearGradient(0, 0, 1, 0, [
                   { offset: 0, color: '#f59e0b' }, { offset: 1, color: '#fb923c' }])
               : new echarts.graphic.LinearGradient(0, 0, 1, 0, [
                   { offset: 0, color: '#2563eb' }, { offset: 1, color: '#22d3ee' }]);
-            return { value: d.growth, itemStyle: { borderRadius: [0, 6, 6, 0], color } };
+            return {
+              value: d.growth,
+              itemStyle: {
+                borderRadius: [0, 6, 6, 0], color,
+                shadowBlur: 10, shadowOffsetX: 2,
+                shadowColor: positive ? 'rgba(251, 146, 60, 0.45)' : 'rgba(34, 211, 238, 0.4)',
+              },
+            };
           }),
         }],
       });
