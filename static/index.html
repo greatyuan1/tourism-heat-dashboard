@@ -139,6 +139,35 @@
     .audience-list li { position: relative; padding-left: 14px; }
     .audience-list li::before { content: ""; position: absolute; left: 0; top: 12px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.6; box-shadow: 0 0 6px rgba(34, 211, 238, 0.5); }
 
+    /* ===== 热度预警与机会城市 ===== */
+    .warn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
+    .warn-card, .opp-card { display: flex; flex-direction: column; }
+    .warn-card h2::before { background: linear-gradient(180deg, var(--bad), var(--warn)); box-shadow: 0 0 12px rgba(245, 158, 11, 0.45); }
+    .opp-card h2::before { background: linear-gradient(180deg, var(--good), var(--accent)); box-shadow: 0 0 12px rgba(52, 211, 153, 0.45); }
+    .warn-list { display: flex; flex-direction: column; }
+    .warn-row, .opp-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; }
+    .warn-row + .warn-row, .opp-row + .opp-row { border-top: 1px solid rgba(56, 189, 248, 0.08); }
+    .warn-rank, .opp-rank {
+      width: 24px; height: 24px; flex: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: #062033;
+    }
+    .warn-rank { background: linear-gradient(135deg, var(--bad), var(--warn)); box-shadow: 0 0 12px rgba(245, 158, 11, 0.45); }
+    .opp-rank { background: linear-gradient(135deg, var(--good), var(--accent)); box-shadow: 0 0 12px rgba(52, 211, 153, 0.45); }
+    .warn-city, .opp-city { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; }
+    .warn-heat { font-size: 14px; font-weight: 800; color: var(--warn); }
+    .opp-heat { font-size: 14px; font-weight: 800; color: var(--good); }
+    .warn-tag, .opp-tag { font-size: 12px; font-weight: 600; white-space: nowrap; border-radius: 999px; padding: 2px 10px; }
+    .warn-tag {
+      color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.16), rgba(248, 113, 113, 0.16));
+    }
+    .opp-tag {
+      color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.4);
+      background: linear-gradient(90deg, rgba(52, 211, 153, 0.16), rgba(34, 211, 238, 0.16));
+    }
+    .warn-tip, .opp-tip { margin-left: auto; font-size: 12px; color: var(--text-dim); white-space: nowrap; text-align: right; }
+
     /* ===== 细分维度热度榜 ===== */
     .sub-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; align-items: stretch; }
     .sub-card { display: flex; flex-direction: column; }
@@ -246,6 +275,7 @@
       .header { flex-wrap: wrap; }
       .spec-grid { grid-template-columns: 1fr; }
       .sub-grid { grid-template-columns: 1fr; }
+      .warn-grid { grid-template-columns: 1fr; }
       .ops-row { grid-template-columns: 1fr; gap: 8px; }
       .ops-head { display: none; }
       .ops-left { flex-wrap: wrap; }
@@ -323,6 +353,18 @@
           <div class="skeleton"></div>
           <div class="skeleton short"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- 热度预警与机会城市 -->
+    <section class="warn-grid">
+      <div class="panel warn-card">
+        <h2>高热度预警城市</h2>
+        <div class="warn-list" id="warn-cities"></div>
+      </div>
+      <div class="panel opp-card">
+        <h2>潜力机会城市</h2>
+        <div class="warn-list" id="opp-cities"></div>
       </div>
     </section>
 
@@ -528,6 +570,7 @@
         renderCityMap();
         renderSurge(); // 城市热度对比榜复用同一份城市热度数据
         renderSubDimensions(); // 细分维度热度榜复用同一份城市热度数据
+        renderWarningOpportunity(); // 潜力机会城市依赖全量热度数据，待 heatRows 就绪后补齐
       } catch (e) {
         const msg = '地图加载失败：' + (e && e.message ? e.message : e);
         showMapError(provinceChart, msg);
@@ -642,6 +685,7 @@
         state.avgMom = j.data.avg_mom;
         renderTop10();
         renderOpsDynamics();
+        renderWarningOpportunity();
       } catch (e) {
         el('chart-top10').innerHTML = '<div class="empty">数据加载失败，请确认后端已启动</div>';
         el('ops-dynamics').innerHTML = '<div class="empty">数据加载失败，请确认后端已启动</div>';
@@ -846,6 +890,58 @@
             </div>`).join('')
           : '<div class="empty">暂无数据</div>';
       });
+    }
+
+    // 热度预警与机会城市：预警（TOP10 中 ≥80 分）+ 机会（热度 50-65 且相对涨幅靠前）
+    const WARN_TIPS = ['建议启动客流分流预案', '建议预警景区承载与交通疏导', '建议联动住宿供给调度', '建议引导错峰出行缓解过载'];
+    const OPP_TIPS = ['建议提前布局低成本获客', '建议加大内容种草抢占心智', '建议投放增量渠道测试转化', '建议培育特色产品提升转化'];
+    function renderWarningOpportunity() {
+      // 左侧：高热度预警城市（综合热度 ≥ 80，按热度降序取前4）
+      const warnBox = el('warn-cities');
+      if (warnBox) {
+        const warnCities = (state.top10 || [])
+          .filter(r => (Number(r.heat_index) || 0) >= 80)
+          .sort((a, b) => (Number(b.heat_index) || 0) - (Number(a.heat_index) || 0))
+          .slice(0, 4);
+        warnBox.innerHTML = warnCities.length
+          ? warnCities.map((r, i) => `
+            <div class="warn-row">
+              <span class="warn-rank">${i + 1}</span>
+              <span class="warn-city">${escapeHtml(r.city || r.name || '—')}</span>
+              <span class="warn-heat">${(Number(r.heat_index) || 0).toFixed(1)}</span>
+              <span class="warn-tag">承载预警</span>
+              <span class="warn-tip">${WARN_TIPS[i] || WARN_TIPS[0]}</span>
+            </div>`).join('')
+          : '<div class="empty">暂无高热度预警城市</div>';
+      }
+      // 右侧：潜力机会城市（综合热度 50-65 且相对涨幅靠前，按涨幅降序取前4）
+      const oppBox = el('opp-cities');
+      if (oppBox) {
+        const rows = (heatRows || []).filter(r => r && (r.city || r.name));
+        const hasGrowth = rows.some(r => typeof r.weekly_growth === 'number' && isFinite(r.weekly_growth));
+        const mean = rows.length ? rows.reduce((s, r) => s + (Number(r.value) || 0), 0) / rows.length : 0;
+        const oppCities = rows
+          .map(r => {
+            const value = Number(r.value) || 0;
+            const growth = hasGrowth
+              ? (Number(r.weekly_growth) || 0)
+              : (mean > 0 ? (value - mean) / mean * 100 : 0);
+            return { city: r.city || r.name, value, growth };
+          })
+          .filter(d => d.value >= 50 && d.value <= 65)
+          .sort((a, b) => b.growth - a.growth)
+          .slice(0, 4);
+        oppBox.innerHTML = oppCities.length
+          ? oppCities.map((d, i) => `
+            <div class="opp-row">
+              <span class="opp-rank">${i + 1}</span>
+              <span class="opp-city">${escapeHtml(d.city)}</span>
+              <span class="opp-heat">${d.value.toFixed(1)}</span>
+              <span class="opp-tag">潜力机会</span>
+              <span class="opp-tip">${OPP_TIPS[i] || OPP_TIPS[0]}</span>
+            </div>`).join('')
+          : '<div class="empty">暂无潜力机会城市</div>';
+      }
     }
 
     // 重点城市运营策略：取热度 Top5，带表头，三列（城市/热度梯队 + 核心驱动因素 + 运营动作建议）
