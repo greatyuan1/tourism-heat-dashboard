@@ -152,16 +152,20 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 12px; font-weight: 800; color: #062033;
     }
-    .warn-rank { background: linear-gradient(135deg, var(--bad), var(--warn)); box-shadow: 0 0 12px rgba(245, 158, 11, 0.45); }
+    .warn-rank.lv0 { background: linear-gradient(135deg, #f87171, #ef4444); box-shadow: 0 0 12px rgba(239, 68, 68, 0.45); }
+    .warn-rank.lv1 { background: linear-gradient(135deg, #fb923c, #f97316); box-shadow: 0 0 12px rgba(249, 115, 22, 0.45); }
+    .warn-rank.lv2 { background: linear-gradient(135deg, #fde047, #fbbf24); box-shadow: 0 0 12px rgba(251, 191, 36, 0.45); }
     .opp-rank { background: linear-gradient(135deg, var(--good), var(--accent)); box-shadow: 0 0 12px rgba(52, 211, 153, 0.45); }
     .warn-city, .opp-city { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; }
-    .warn-heat { font-size: 14px; font-weight: 800; color: var(--warn); }
+    .warn-heat { font-size: 14px; font-weight: 800; }
+    .warn-heat.lv0 { color: #f87171; }
+    .warn-heat.lv1 { color: #fb923c; }
+    .warn-heat.lv2 { color: #fbbf24; }
     .opp-heat { font-size: 14px; font-weight: 800; color: var(--good); }
     .warn-tag, .opp-tag { font-size: 12px; font-weight: 600; white-space: nowrap; border-radius: 999px; padding: 2px 10px; }
-    .warn-tag {
-      color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);
-      background: linear-gradient(90deg, rgba(245, 158, 11, 0.16), rgba(248, 113, 113, 0.16));
-    }
+    .warn-tag.lv0 { color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.16); }
+    .warn-tag.lv1 { color: #fdba74; border: 1px solid rgba(249, 115, 22, 0.45); background: rgba(249, 115, 22, 0.16); }
+    .warn-tag.lv2 { color: #fde68a; border: 1px solid rgba(251, 191, 36, 0.45); background: rgba(251, 191, 36, 0.16); }
     .opp-tag {
       color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.4);
       background: linear-gradient(90deg, rgba(52, 211, 153, 0.16), rgba(34, 211, 238, 0.16));
@@ -892,26 +896,36 @@
       });
     }
 
-    // 热度预警与机会城市：预警（TOP10 中 ≥80 分）+ 机会（热度 50-65 且相对涨幅靠前）
-    const WARN_TIPS = ['建议启动客流分流预案', '建议预警景区承载与交通疏导', '建议联动住宿供给调度', '建议引导错峰出行缓解过载'];
+    // 热度预警与机会城市：预警（TOP4 分三级预警）+ 机会（热度 50-65 且相对涨幅靠前）
+    const WARN_LEVELS = [
+      { label: '极高预警', tip: '建议启动客流分流预案' },
+      { label: '高预警', tip: '建议提前扩容接待资源' },
+      { label: '关注预警', tip: '建议持续监测热度走势' },
+    ];
     const OPP_TIPS = ['建议提前布局低成本获客', '建议加大内容种草抢占心智', '建议投放增量渠道测试转化', '建议培育特色产品提升转化'];
     function renderWarningOpportunity() {
-      // 左侧：高热度预警城市（综合热度 ≥ 80，按热度降序取前4）
+      // 左侧：高热度预警城市（取综合热度 TOP4，按热度值分三级预警）
       const warnBox = el('warn-cities');
       if (warnBox) {
         const warnCities = (state.top10 || [])
-          .filter(r => (Number(r.heat_index) || 0) >= 80)
+          .slice()
           .sort((a, b) => (Number(b.heat_index) || 0) - (Number(a.heat_index) || 0))
           .slice(0, 4);
+        const warnLevel = heat => (heat >= 90 ? 0 : heat >= 75 ? 1 : 2);
         warnBox.innerHTML = warnCities.length
-          ? warnCities.map((r, i) => `
-            <div class="warn-row">
-              <span class="warn-rank">${i + 1}</span>
-              <span class="warn-city">${escapeHtml(r.city || r.name || '—')}</span>
-              <span class="warn-heat">${(Number(r.heat_index) || 0).toFixed(1)}</span>
-              <span class="warn-tag">承载预警</span>
-              <span class="warn-tip">${WARN_TIPS[i] || WARN_TIPS[0]}</span>
-            </div>`).join('')
+          ? warnCities.map((r, i) => {
+              const heat = Number(r.heat_index) || 0;
+              const lv = warnLevel(heat);
+              const { label, tip } = WARN_LEVELS[lv];
+              return `
+                <div class="warn-row">
+                  <span class="warn-rank lv${lv}">${i + 1}</span>
+                  <span class="warn-city">${escapeHtml(r.city || r.name || '—')}</span>
+                  <span class="warn-heat lv${lv}">${heat.toFixed(1)}</span>
+                  <span class="warn-tag lv${lv}">${label}</span>
+                  <span class="warn-tip">${tip}</span>
+                </div>`;
+            }).join('')
           : '<div class="empty">暂无高热度预警城市</div>';
       }
       // 右侧：潜力机会城市（综合热度 50-65 且相对涨幅靠前，按涨幅降序取前4）
